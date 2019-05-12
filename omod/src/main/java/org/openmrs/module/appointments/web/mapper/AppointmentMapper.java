@@ -14,12 +14,11 @@ import org.openmrs.module.appointments.model.AppointmentProviderResponse;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
 import org.openmrs.module.appointments.model.AppointmentServiceType;
 import org.openmrs.module.appointments.model.AppointmentStatus;
+import org.openmrs.module.appointments.model.RecurringPattern;
 import org.openmrs.module.appointments.service.AppointmentServiceDefinitionService;
 import org.openmrs.module.appointments.service.AppointmentsService;
-import org.openmrs.module.appointments.web.contract.AppointmentDefaultResponse;
-import org.openmrs.module.appointments.web.contract.AppointmentProviderDetail;
-import org.openmrs.module.appointments.web.contract.AppointmentRequest;
-import org.openmrs.module.appointments.web.contract.AppointmentQuery;
+import org.openmrs.module.appointments.service.RecurringPatternService;
+import org.openmrs.module.appointments.web.contract.*;
 import org.openmrs.module.appointments.web.extension.AppointmentResponseExtension;
 import org.openmrs.module.webservices.rest.web.response.ConversionException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,11 +52,21 @@ public class AppointmentMapper {
     @Autowired
     AppointmentsService appointmentsService;
 
+    @Autowired
+    RecurringPatternService recurringPatternService;
+
     @Autowired(required = false)
     AppointmentResponseExtension appointmentResponseExtension;
 
     public List<AppointmentDefaultResponse> constructResponse(List<Appointment> appointments) {
         return appointments.stream().map(as -> this.mapToDefaultResponse(as, new AppointmentDefaultResponse())).collect(Collectors.toList());
+    }
+
+    public RecurringAppointmentsResponse constructResponse(RecurringPattern recurringPattern) {
+        List<AppointmentDefaultResponse> appointmentResponses = constructResponse(new ArrayList<>(recurringPattern.getAppointments()));
+
+        //return new RecurringAppointmentsResponse(recurringPattern, appointmentResponses);
+        return null;
     }
 
     public AppointmentDefaultResponse constructResponse(Appointment appointment) {
@@ -87,6 +96,22 @@ public class AppointmentMapper {
         appointment.setComments(appointmentRequest.getComments());
         mapProvidersForAppointment(appointment, appointmentRequest.getProviders());
         return appointment;
+    }
+
+    public RecurringPattern fromRecurrenceRequest(AppointmentRequest appointmentRequest) {
+        RecurringPattern recurringPattern;
+        if (appointmentRequest.getRecurringPattern() != null
+                && appointmentRequest.getRecurringPattern().getId() != null) {
+            recurringPattern = recurringPatternService.getRecurringPatternById(appointmentRequest.getRecurringPattern().getId());
+        } else {
+            recurringPattern = new RecurringPattern();
+        }
+        recurringPattern.setDaysOfWeek(String.join(", ", appointmentRequest.getRecurringPattern().getDaysOfWeek()));
+        recurringPattern.setPeriod(appointmentRequest.getRecurringPattern().getPeriod());
+        recurringPattern.setFrequency(appointmentRequest.getRecurringPattern().getFrequency());
+        recurringPattern.setType(appointmentRequest.getRecurringPattern().getType());
+        recurringPattern.setEndDate(appointmentRequest.getRecurringPattern().getEndDate());
+        return recurringPattern;
     }
 
     private Provider identifyAppointmentProvider(String providerUuid) {

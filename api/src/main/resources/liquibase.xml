@@ -445,4 +445,39 @@
         </sql>
     </changeSet>
 
+    <changeSet id="patient_appointment_recurring_time_migration_201905091550" author="vinay, alekhya">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="patient_appointment_recurring_time" />
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE IF NOT EXISTS patient_appointment_recurring_time (
+            patient_appointment_timings_id INT NOT NULL AUTO_INCREMENT,
+            recurrence_type VARCHAR(20) NOT NULL,
+            period INT NOT NULL,
+            frequency INT,
+            end_date DATETIME,
+            days_of_week VARCHAR(50),
+            PRIMARY KEY (patient_appointment_timings_id));
+        </sql>
+    </changeSet>
+
+    <changeSet id="patient_appointment_occurrence_migration_201905091551" author="vinay, alekhya">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="patient_appointment_occurrence" />
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE patient_appointment_occurrence (
+            patient_appointment_timings_id INT,
+            patient_appointment_id INT,
+            FOREIGN KEY (patient_appointment_timings_id)
+            REFERENCES patient_appointment_recurring_time(patient_appointment_timings_id),
+            FOREIGN KEY (patient_appointment_id)
+            REFERENCES patient_appointment(patient_appointment_id));
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

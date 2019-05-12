@@ -26,15 +26,12 @@ import java.util.stream.Collectors;
 @Transactional
 public class AppointmentsServiceImpl implements AppointmentsService {
 
-    private Log log = LogFactory.getLog(this.getClass());
-
     AppointmentDao appointmentDao;
-
     List<AppointmentStatusChangeValidator> statusChangeValidators;
-
     List<AppointmentValidator> appointmentValidators;
-
     AppointmentAuditDao appointmentAuditDao;
+
+    private Log log = LogFactory.getLog(this.getClass());
 
     public void setAppointmentDao(AppointmentDao appointmentDao) {
         this.appointmentDao = appointmentDao;
@@ -54,30 +51,29 @@ public class AppointmentsServiceImpl implements AppointmentsService {
 
     @Override
     public Appointment validateAndSave(Appointment appointment) throws APIException {
-        if(!CollectionUtils.isEmpty(appointmentValidators)){
+        if (!CollectionUtils.isEmpty(appointmentValidators)) {
             List<String> errors = new ArrayList<>();
-            for(AppointmentValidator validator: appointmentValidators){
+            for (AppointmentValidator validator : appointmentValidators) {
                 validator.validate(appointment, errors);
             }
-            if(!errors.isEmpty()) {
+            if (!errors.isEmpty()) {
                 String message = StringUtils.join(errors, "\n");
                 throw new APIException(message);
             }
         }
         checkAndAssignAppointmentNumber(appointment);
         appointmentDao.save(appointment);
-	    try {
-		    createEventInAppointmentAudit(appointment, getAppointmentAsJsonString(appointment));
-	    }
-	    catch (IOException e) {
-		    throw new APIException(e);
-	    }
-	    return appointment;
+        try {
+            createEventInAppointmentAudit(appointment, getAppointmentAsJsonString(appointment));
+        } catch (IOException e) {
+            throw new APIException(e);
+        }
+        return appointment;
     }
 
     //TODO refactor throwing of IOExeption. Its forcing everywhere the exception to be caught and rethrown
     private String getAppointmentAsJsonString(Appointment appointment) throws IOException {
-        Map appointmentJson = new HashMap<String,String>();
+        Map appointmentJson = new HashMap<String, String>();
         String serviceUuid = appointment.getService().getUuid();
         appointmentJson.put("serviceUuid", serviceUuid);
         String serviceTypeUuid = appointment.getServiceType() != null ? appointment.getServiceType().getUuid() : null;
@@ -100,7 +96,7 @@ public class AppointmentsServiceImpl implements AppointmentsService {
         List<Appointment> appointments = appointmentDao.getAllAppointments(forDate);
         return appointments.stream().filter(appointment -> !isServiceOrServiceTypeVoided(appointment)).collect(Collectors.toList());
     }
-    
+
     private boolean isServiceOrServiceTypeVoided(Appointment appointment){
         return (appointment.getService() != null && appointment.getService().getVoided()) ||
                (appointment.getServiceType() != null && appointment.getServiceType().getVoided());

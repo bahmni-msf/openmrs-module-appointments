@@ -148,5 +148,23 @@
         </property>
     </bean>
 
-
+    <bean id="recurringPatternService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target">
+            <bean class="org.openmrs.module.appointments.service.impl.RecurringPatternServiceImpl">
+                <property name="appointmentRecurringPatternDao">
+                    <bean class="org.openmrs.module.appointments.dao.impl.AppointmentRecurringPatternDaoImpl">
+                        <property name="sessionFactory">
+                            <ref bean="sessionFactory"/>
+                        </property>
+                    </bean>
+                </property>
+                <property name="appointmentsService">
+                    <ref bean="appointmentsService"/>
+                </property>
+            </bean>
+        </property>
+    </bean>
 </beans>
