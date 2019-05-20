@@ -233,7 +233,7 @@ public class AppointmentsServiceImpl implements AppointmentsService {
     }
 
     private void checkAndAssignAppointmentNumber(Appointment appointment) {
-        if(appointment.getAppointmentNumber() == null) {
+        if (appointment.getAppointmentNumber() == null) {
             appointment.setAppointmentNumber(generateAppointmentNumber(appointment));
         }
     }

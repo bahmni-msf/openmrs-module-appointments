@@ -7,17 +7,19 @@ import org.junit.rules.ExpectedException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import static org.mockito.Matchers.any;
 import org.openmrs.Patient;
 import org.openmrs.api.APIException;
 import org.openmrs.module.appointments.model.Appointment;
+import org.openmrs.module.appointments.model.AppointmentRecurringPattern;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
 import org.openmrs.module.appointments.model.AppointmentServiceType;
 import org.openmrs.module.appointments.model.AppointmentStatus;
 import org.openmrs.module.appointments.service.AppointmentServiceDefinitionService;
 import org.openmrs.module.appointments.service.AppointmentsService;
+import org.openmrs.module.appointments.service.RecurringAppointmentService;
 import org.openmrs.module.appointments.util.DateUtil;
 import org.openmrs.module.appointments.web.contract.*;
+import org.openmrs.module.appointments.web.helper.RecurringAppointmentsHelper;
 import org.openmrs.module.appointments.web.mapper.AppointmentMapper;
 import org.openmrs.module.appointments.web.mapper.AppointmentServiceMapper;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,7 @@ import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -41,6 +44,12 @@ public class AppointmentControllerTest {
 
     @Mock
     private AppointmentsService appointmentsService;
+
+    @Mock
+    private RecurringAppointmentService recurringAppointmentService;
+
+    @Mock
+    private RecurringAppointmentsHelper recurringAppointmentsHelper;
 
     @Mock
     private AppointmentServiceDefinitionService appointmentServiceDefinitionService;
@@ -90,19 +99,19 @@ public class AppointmentControllerTest {
         assertEquals(1, appointmentDefaultResponses.size());
         assertEquals(appointment.getUuid(), appointmentDefaultResponses.get(0).getUuid());
     }
-    
+
     @Test
     public void shouldGetAllAppointments() throws Exception {
         Appointment appointment = new Appointment();
         List<Appointment> appointmentList = new ArrayList<>();
         appointmentList.add(appointment);
         when(appointmentsService.getAllAppointments(null)).thenReturn(appointmentList);
-        
+
         appointmentController.getAllAppointments(null);
         verify(appointmentsService, times(1)).getAllAppointments(null);
         verify(appointmentMapper, times(1)).constructResponse(appointmentList);
     }
-    
+
     @Test
     public void shouldGetAllAppointmentsForDate() throws Exception {
         Appointment appointment = new Appointment();
@@ -110,9 +119,9 @@ public class AppointmentControllerTest {
         appointmentList.add(appointment);
         String dateString = "2017-08-15T00:00:00.0Z";
         Date forDate = DateUtil.convertToLocalDateFromUTC(dateString);
-        
+
         when(appointmentsService.getAllAppointments(forDate)).thenReturn(appointmentList);
-        
+
         appointmentController.getAllAppointments(dateString);
         verify(appointmentsService, times(1)).getAllAppointments(forDate);
         verify(appointmentMapper, times(1)).constructResponse(appointmentList);
@@ -278,5 +287,34 @@ public class AppointmentControllerTest {
         appointmentController.saveAppointment(appointmentRequest);
         Mockito.verify(appointmentMapper, times(1)).fromRequest(appointmentRequest);
         Mockito.verify(appointmentsService, times(1)).validateAndSave(appointment);
+    }
+
+    @Test
+    public void shouldSaveAnAppointmentWhenRecurringPatternAlsoPresentsInRequest() throws Exception{
+        AppointmentRequest appointmentRequest = new AppointmentRequest();
+        RecurringPattern recurringPattern = new RecurringPattern();
+        recurringPattern.setType("sometype");
+        recurringPattern.setPeriod(1);
+        recurringPattern.setFrequency(1);
+        appointmentRequest.setStartDateTime(new Date());
+        appointmentRequest.setUuid("someUuid");
+        appointmentRequest.setServiceUuid("someServiceUuid");
+        appointmentRequest.setRecurringPattern(recurringPattern);
+        Appointment appointmentOne = new Appointment();
+        appointmentOne.setUuid("appointmentUuid");
+        Appointment appointmentTwo = new Appointment();
+        appointmentTwo.setUuid("appointmentUuid");
+        AppointmentRecurringPattern appointmentRecurringPattern = new AppointmentRecurringPattern();
+
+        when(appointmentMapper.fromRequestRecurringPattern(recurringPattern)).thenReturn(appointmentRecurringPattern);
+        when(recurringAppointmentService.saveRecurringAppointments(appointmentRecurringPattern,
+                Arrays.asList(appointmentOne,appointmentTwo))).thenReturn(Arrays.asList(appointmentOne,appointmentTwo));
+        when(recurringAppointmentsHelper.generateRecurringAppointments(appointmentRecurringPattern, appointmentRequest)).thenReturn(new ArrayList<Appointment>());
+
+        appointmentController.saveAppointment(appointmentRequest);
+        Mockito.verify(appointmentMapper, times(1)).fromRequestRecurringPattern(recurringPattern);
+        Mockito.verify(recurringAppointmentService, times(1)).saveRecurringAppointments(appointmentRecurringPattern,
+                Collections.emptyList());
+        Mockito.verify(recurringAppointmentsHelper, times(1)).generateRecurringAppointments(appointmentRecurringPattern,appointmentRequest);
     }
 }

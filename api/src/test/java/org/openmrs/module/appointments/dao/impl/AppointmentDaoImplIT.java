@@ -36,9 +36,9 @@ public class AppointmentDaoImplIT extends BaseIntegrationTest {
     @Test
     public void shouldGetAllNonVoidedAppointments() throws Exception {
         List<Appointment> allAppointmentServices = appointmentDao.getAllAppointments(null);
-        assertEquals(9, allAppointmentServices.size());
+        assertEquals(11, allAppointmentServices.size());
     }
-    
+
     @Test
     public void shouldGetAllNonVoidedAppointmentsForDate() throws Exception {
         Date forDate = DateUtil.convertToDate("2108-08-15T00:00:00.0Z", DateUtil.DateFormatType.UTC);
@@ -49,12 +49,12 @@ public class AppointmentDaoImplIT extends BaseIntegrationTest {
     @Test
     public void shouldSaveAppointmentService() throws Exception {
         List<Appointment> allAppointments = appointmentDao.getAllAppointments(null);
-        assertEquals(9, allAppointments.size());
+        assertEquals(11, allAppointments.size());
         Appointment apt = new Appointment();
         apt.setPatient(allAppointments.get(0).getPatient());
         appointmentDao.save(apt);
         allAppointments = appointmentDao.getAllAppointments(null);
-        assertEquals(10, allAppointments.size());
+        assertEquals(12, allAppointments.size());
     }
 
     @Test
@@ -139,13 +139,13 @@ public class AppointmentDaoImplIT extends BaseIntegrationTest {
     public void shouldGetAppointmentsBeforeCurrentDateWhenStartDateIsNotProvided() throws ParseException {
         Date to = DateUtil.convertToDate("2108-08-15T00:00:00.0Z", DateUtil.DateFormatType.UTC);
         List<Appointment> allAppointments = appointmentDao.getAllAppointmentsInDateRange(null, to);
-        assertEquals(4, allAppointments.size());
+        assertEquals(6, allAppointments.size());
     }
 
     @Test
     public void shouldGetAllNonVoidedAppointmentsWhenNoDateRangeIsProvided() throws Exception {
         List<Appointment> allAppointmentServices = appointmentDao.getAllAppointmentsInDateRange(null, null);
-        assertEquals(9, allAppointmentServices.size());
+        assertEquals(11, allAppointmentServices.size());
     }
 
     @Test
