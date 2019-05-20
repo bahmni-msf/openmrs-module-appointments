@@ -10,9 +10,9 @@ import org.openmrs.module.appointments.model.AppointmentAudit;
 import org.openmrs.module.appointments.service.AppointmentsService;
 import org.openmrs.module.appointments.util.DateUtil;
 import org.openmrs.module.appointments.web.BaseIntegrationTest;
-import org.openmrs.module.appointments.web.contract.DailyAppointmentServiceSummary;
 import org.openmrs.module.appointments.web.contract.AppointmentDefaultResponse;
 import org.openmrs.module.appointments.web.contract.AppointmentsSummary;
+import org.openmrs.module.appointments.web.contract.DailyAppointmentServiceSummary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -22,10 +22,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class AppointmentControllerIT extends BaseIntegrationTest {
     @Autowired
@@ -51,7 +48,7 @@ public class AppointmentControllerIT extends BaseIntegrationTest {
                 });
         assertEquals(7, asResponses.size());
     }
-    
+
     @Test
     public void should_GetAllAppointmentsForDate() throws Exception {
         List<AppointmentDefaultResponse> asResponses
@@ -72,9 +69,9 @@ public class AppointmentControllerIT extends BaseIntegrationTest {
                 "\"endDateTime\": \"2017-07-20\",  " +
                 "\"appointmentKind\": \"WalkIn\", " +
                 "\"providers\": [ {" +
-                    "\"uuid\":\"2d15071d-439d-44e8-9825-aa8e1a30d2a2\"," +
-                    "\"comments\":\"available\"," +
-                    "\"response\":\"ACCEPTED\"" +
+                "\"uuid\":\"2d15071d-439d-44e8-9825-aa8e1a30d2a2\"," +
+                "\"comments\":\"available\"," +
+                "\"response\":\"ACCEPTED\"" +
                 "} ] }";
 
         MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment", content));
@@ -88,7 +85,8 @@ public class AppointmentControllerIT extends BaseIntegrationTest {
         String serviceTypeUuid = "678906e5-9fbb-4f20-866b-0ece24564578";
         MockHttpServletRequest getRequest = newGetRequest(requestURI, new Parameter("appointmentServiceTypeUuid", serviceTypeUuid));
         List<AppointmentDefaultResponse> asResponse = deserialize(handle(getRequest),
-            new TypeReference<List<AppointmentDefaultResponse>>() {});
+                new TypeReference<List<AppointmentDefaultResponse>>() {
+                });
 
         assertEquals(5, asResponse.size());
     }
@@ -109,7 +107,7 @@ public class AppointmentControllerIT extends BaseIntegrationTest {
         assertEquals("c36006e5-9fbb-4f20-866b-0ece245615a6", appointmentsSummary.getAppointmentService().getUuid());
         assertEquals(1, appointmentsSummary.getAppointmentCountMap().size());
         Map<String, DailyAppointmentServiceSummary> appointmentCountMap = appointmentsSummary.getAppointmentCountMap();
-        Map appointmentCount = (Map)appointmentCountMap.get("2108-08-15");
+        Map appointmentCount = (Map) appointmentCountMap.get("2108-08-15");
         assertNotNull(appointmentCount);
         assertEquals(4, appointmentCount.get("allAppointmentsCount"));
         assertEquals(1, appointmentCount.get("missedAppointmentsCount"));
@@ -155,7 +153,7 @@ public class AppointmentControllerIT extends BaseIntegrationTest {
     @Test
     public void should_changeAppointmentStatusWithDate() throws Exception {
         String onDate = "2108-08-22T10:30:00.0Z";
-        String content = "{ \"toStatus\": \"CheckedIn\", \"onDate\":\""+ onDate +"\"}";
+        String content = "{ \"toStatus\": \"CheckedIn\", \"onDate\":\"" + onDate + "\"}";
         MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment/c36006e5-9fbb-4f20-866b-0ece245615a7/changeStatus", content));
         assertNotNull(response);
         Appointment appointmentByUuid = appointmentsService.getAppointmentByUuid("c36006e5-9fbb-4f20-866b-0ece245615a7");
@@ -230,7 +228,7 @@ public class AppointmentControllerIT extends BaseIntegrationTest {
 
     @Test
     public void shouldThrowExceptionForInvalidAppointmentOnUndoStatus() throws Exception {
-        MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment/undoStatusChange/"+ "randomUuid", "{}"));
+        MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment/undoStatusChange/" + "randomUuid", "{}"));
         assertNotNull(response);
         assertEquals(400, response.getStatus());
         assertTrue(response.getContentAsString().contains("Appointment does not exist"));
@@ -249,14 +247,15 @@ public class AppointmentControllerIT extends BaseIntegrationTest {
         MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment", content));
         assertNotNull(response);
         assertEquals(200, response.getStatus());
-        AppointmentDefaultResponse appointmentDefaultResponse = deserialize(response, new TypeReference<AppointmentDefaultResponse>() {});
+        AppointmentDefaultResponse appointmentDefaultResponse = deserialize(response, new TypeReference<AppointmentDefaultResponse>() {
+        });
         String appointmentUuid = appointmentDefaultResponse.getUuid();
 
         content = "{ \"toStatus\": \"CheckedIn\"}";
-        response = handle(newPostRequest("/rest/v1/appointment/"+ appointmentUuid +"/changeStatus", content));
+        response = handle(newPostRequest("/rest/v1/appointment/" + appointmentUuid + "/changeStatus", content));
         assertEquals(200, response.getStatus());
         content = "{}";
-        response = handle(newPostRequest("/rest/v1/appointment/undoStatusChange/"+ appointmentUuid, content));
+        response = handle(newPostRequest("/rest/v1/appointment/undoStatusChange/" + appointmentUuid, content));
         assertNotNull(response);
         assertEquals(200, response.getStatus());
         Appointment appointment = appointmentsService.getAppointmentByUuid(appointmentUuid);
@@ -268,13 +267,13 @@ public class AppointmentControllerIT extends BaseIntegrationTest {
     public void shouldUndoMissedAppointment() throws Exception {
         String appointmentUuid = "c36006e5-9fbb-4f20-866b-0ece245615a7";
         String content = "{ \"toStatus\": \"CheckedIn\"}";
-        MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment/"+ appointmentUuid +"/changeStatus", content));
+        MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment/" + appointmentUuid + "/changeStatus", content));
         assertEquals(200, response.getStatus());
         content = "{ \"toStatus\": \"Missed\"}";
-        response = handle(newPostRequest("/rest/v1/appointment/"+ appointmentUuid +"/changeStatus", content));
+        response = handle(newPostRequest("/rest/v1/appointment/" + appointmentUuid + "/changeStatus", content));
         assertEquals(200, response.getStatus());
         content = "{}";
-        response = handle(newPostRequest("/rest/v1/appointment/undoStatusChange/"+ appointmentUuid, content));
+        response = handle(newPostRequest("/rest/v1/appointment/undoStatusChange/" + appointmentUuid, content));
         assertNotNull(response);
         assertEquals(200, response.getStatus());
         Appointment appointment = appointmentsService.getAppointmentByUuid(appointmentUuid);
@@ -294,13 +293,44 @@ public class AppointmentControllerIT extends BaseIntegrationTest {
         MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment", content));
         assertNotNull(response);
         assertEquals(200, response.getStatus());
-        AppointmentDefaultResponse appointmentDefaultResponse = deserialize(response, new TypeReference<AppointmentDefaultResponse>() {});
+        AppointmentDefaultResponse appointmentDefaultResponse = deserialize(response, new TypeReference<AppointmentDefaultResponse>() {
+        });
         String appointmentUuid = appointmentDefaultResponse.getUuid();
         content = "{}";
-        response = handle(newPostRequest("/rest/v1/appointment/undoStatusChange/"+ appointmentUuid, content));
+        response = handle(newPostRequest("/rest/v1/appointment/undoStatusChange/" + appointmentUuid, content));
         assertNotNull(response);
         assertEquals(400, response.getStatus());
         assertTrue(response.getContentAsString().contains("No status change actions to undo"));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenThereIsNoRequestPayload() throws Exception {
+        String content = "{}";
+        MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment", content));
+        assertNotNull(response);
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void shouldSaveRecurringAppointments() throws Exception {
+        String content = "{ \"providerUuid\": \"823fdcd7-3f10-11e4-adec-0800271c1b75\", " +
+                "\"appointmentNumber\": \"1\",  " +
+                "\"patientUuid\": \"2c33920f-7aa6-48d6-998a-60412d8ff7d5\", " +
+                "\"serviceUuid\": \"c36006d4-9fbb-4f20-866b-0ece245615c1\", " +
+                "\"startDateTime\": \"2019-05-19T23:45:00.000Z\", " +
+                "\"endDateTime\": \"2019-05-20T00:15:00.000Z\",  " +
+                "\"appointmentKind\": \"WalkIn\", " +
+                "\"providers\": []," +
+                "\"recurringPattern\":{" +
+                "\"frequency\":2," +
+                "\"period\":2," +
+                "\"daysOfWeek\":[]," +
+                "\"endDate\":\"\"," +
+                "\"type\":\"Day\"" +
+                "}}";
+        MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment", content));
+        assertNotNull(response);
+        assertEquals(200, response.getStatus());
     }
 
 }
