@@ -4,12 +4,17 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.openmrs.api.APIException;
 import org.openmrs.module.appointments.dao.AppointmentAuditDao;
 import org.openmrs.module.appointments.dao.AppointmentDao;
-import org.openmrs.module.appointments.model.*;
+import org.openmrs.module.appointments.helper.AppointmentServiceHelper;
+import org.openmrs.module.appointments.model.Appointment;
+import org.openmrs.module.appointments.model.AppointmentAudit;
+import org.openmrs.module.appointments.model.AppointmentProvider;
+import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
+import org.openmrs.module.appointments.model.AppointmentServiceType;
+import org.openmrs.module.appointments.model.AppointmentStatus;
 import org.openmrs.module.appointments.service.AppointmentsService;
 import org.openmrs.module.appointments.validator.AppointmentStatusChangeValidator;
 import org.openmrs.module.appointments.validator.AppointmentValidator;
@@ -18,9 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -35,6 +38,8 @@ public class AppointmentsServiceImpl implements AppointmentsService {
     List<AppointmentValidator> appointmentValidators;
 
     AppointmentAuditDao appointmentAuditDao;
+
+    AppointmentServiceHelper appointmentServiceHelper;
 
     public void setAppointmentDao(AppointmentDao appointmentDao) {
         this.appointmentDao = appointmentDao;
@@ -52,47 +57,27 @@ public class AppointmentsServiceImpl implements AppointmentsService {
         this.appointmentAuditDao = appointmentAuditDao;
     }
 
-    @Override
-    public Appointment validateAndSave(Appointment appointment) throws APIException {
-        if(!CollectionUtils.isEmpty(appointmentValidators)){
-            List<String> errors = new ArrayList<>();
-            for(AppointmentValidator validator: appointmentValidators){
-                validator.validate(appointment, errors);
-            }
-            if(!errors.isEmpty()) {
-                String message = StringUtils.join(errors, "\n");
-                throw new APIException(message);
-            }
-        }
-        checkAndAssignAppointmentNumber(appointment);
-        appointmentDao.save(appointment);
-	    try {
-		    createEventInAppointmentAudit(appointment, getAppointmentAsJsonString(appointment));
-	    }
-	    catch (IOException e) {
-		    throw new APIException(e);
-	    }
-	    return appointment;
+    public void setAppointmentServiceHelper(AppointmentServiceHelper appointmentServiceHelper) {
+        this.appointmentServiceHelper = appointmentServiceHelper;
     }
 
-    //TODO refactor throwing of IOExeption. Its forcing everywhere the exception to be caught and rethrown
-    private String getAppointmentAsJsonString(Appointment appointment) throws IOException {
-        Map appointmentJson = new HashMap<String,String>();
-        String serviceUuid = appointment.getService().getUuid();
-        appointmentJson.put("serviceUuid", serviceUuid);
-        String serviceTypeUuid = appointment.getServiceType() != null ? appointment.getServiceType().getUuid() : null;
-        appointmentJson.put("serviceTypeUuid", serviceTypeUuid);
-        //TODO: Should check appointment.getProviders() instead
-        String providerUuid = appointment.getProvider() != null ? appointment.getProvider().getUuid() : null;
-        appointmentJson.put("providerUuid", providerUuid);
-        String locationUuid = appointment.getLocation() != null ? appointment.getLocation().getUuid() : null;
-        appointmentJson.put("locationUuid", locationUuid);
-        appointmentJson.put("startDateTime", appointment.getStartDateTime().toInstant().toString());
-        appointmentJson.put("endDateTime", appointment.getEndDateTime().toInstant().toString());
-        appointmentJson.put("appointmentKind", appointment.getAppointmentKind().name());
-        appointmentJson.put("appointmentNotes", appointment.getComments());
-        ObjectMapper mapperObj = new ObjectMapper();
-        return String.format("%s", mapperObj.writeValueAsString(appointmentJson));
+    @Override
+    public Appointment validateAndSave(Appointment appointment) throws APIException {
+        List<String> errors = new ArrayList<>();
+        appointmentServiceHelper.validate(appointment, appointmentValidators, errors);
+        if (!errors.isEmpty()) {
+            String message = StringUtils.join(errors, "\n");
+            throw new APIException(message);
+        }
+        appointmentServiceHelper.checkAndAssignAppointmentNumber(appointment);
+        appointmentDao.save(appointment);
+        try {
+            createEventInAppointmentAudit(appointment,
+                    appointmentServiceHelper.getAppointmentAsJsonString(appointment));
+        } catch (IOException e) {
+            throw new APIException(e);
+        }
+        return appointment;
     }
 
     @Override
@@ -192,7 +177,8 @@ public class AppointmentsServiceImpl implements AppointmentsService {
         try {
             //cancel the previous appointment
             changeStatus(prevAppointment, AppointmentStatus.Cancelled.toString(), new Date());
-            createEventInAppointmentAudit(prevAppointment, getAppointmentAsJsonString(prevAppointment));
+            createEventInAppointmentAudit(prevAppointment,
+                    appointmentServiceHelper.getAppointmentAsJsonString(prevAppointment));
 
             //create a new appointment
             newAppointment.setUuid(null);
@@ -203,7 +189,7 @@ public class AppointmentsServiceImpl implements AppointmentsService {
 
             //TODO: should we copy the original appointment
             //newAppointment.setAppointmentNumber(prevAppointment.getAppointmentNumber());
-            checkAndAssignAppointmentNumber(newAppointment);
+            appointmentServiceHelper.checkAndAssignAppointmentNumber(newAppointment);
 
             newAppointment.setStatus(AppointmentStatus.Scheduled);
             validateAndSave(newAppointment);
@@ -215,11 +201,8 @@ public class AppointmentsServiceImpl implements AppointmentsService {
     }
 
     private void createEventInAppointmentAudit(Appointment appointment,
-            String notes) {
-        AppointmentAudit appointmentAuditEvent = new AppointmentAudit();
-        appointmentAuditEvent.setAppointment(appointment);
-        appointmentAuditEvent.setStatus(appointment.getStatus());
-        appointmentAuditEvent.setNotes(notes);
+                                               String notes) {
+        AppointmentAudit appointmentAuditEvent = appointmentServiceHelper.getAppointmentAuditEvent(appointment, notes);
         appointmentAuditDao.save(appointmentAuditEvent);
     }
 
@@ -231,16 +214,4 @@ public class AppointmentsServiceImpl implements AppointmentsService {
             }
         }
     }
-
-    private void checkAndAssignAppointmentNumber(Appointment appointment) {
-        if (appointment.getAppointmentNumber() == null) {
-            appointment.setAppointmentNumber(generateAppointmentNumber(appointment));
-        }
-    }
-
-    //TODO: extract this out to a pluggable strategy
-    private String generateAppointmentNumber(Appointment appointment) {
-        return "0000";
-    }
-
 }
