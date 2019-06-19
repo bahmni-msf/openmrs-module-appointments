@@ -27,12 +27,7 @@ import org.openmrs.module.webservices.rest.web.response.ConversionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.openmrs.module.appointments.service.impl.RecurringAppointmentType.DAY;
@@ -194,23 +189,56 @@ public class AppointmentMapper {
         return appointment;
     }
 
-    private AppointmentDefaultResponse mapToDefaultResponse(Appointment a, AppointmentDefaultResponse response) {
-        response.setUuid(a.getUuid());
-        response.setAppointmentNumber(a.getAppointmentNumber());
-        response.setPatient(createPatientMap(a.getPatient()));
-        response.setService(appointmentServiceMapper.constructDefaultResponse(a.getService()));
-        response.setServiceType(createServiceTypeMap(a.getServiceType()));
-        //response.setProvider(createProviderMap(a.getProvider()));
-        response.setLocation(createLocationMap(a.getLocation()));
-        response.setStartDateTime(a.getStartDateTime());
-        response.setEndDateTime(a.getEndDateTime());
-        response.setAppointmentKind(a.getAppointmentKind().name());
-        response.setStatus(a.getStatus().name());
-        response.setComments(a.getComments());
-        if(appointmentResponseExtension!=null)
-            response.setAdditionalInfo(appointmentResponseExtension.run(a));
-        response.setProviders(mapAppointmentProviders(a.getProviders()));
-        return response;
+    private AppointmentDefaultResponse mapToDefaultResponse(Appointment appointment, AppointmentDefaultResponse appointmentDefaultResponse) {
+        appointmentDefaultResponse.setUuid(appointment.getUuid());
+        appointmentDefaultResponse.setAppointmentNumber(appointment.getAppointmentNumber());
+        appointmentDefaultResponse.setPatient(createPatientMap(appointment.getPatient()));
+        appointmentDefaultResponse.setService(appointmentServiceMapper.constructDefaultResponse(appointment.getService()));
+        appointmentDefaultResponse.setServiceType(createServiceTypeMap(appointment.getServiceType()));
+        //appointmentDefaultResponse.setProvider(createProviderMap(appointment.getProvider()));
+        appointmentDefaultResponse.setLocation(createLocationMap(appointment.getLocation()));
+        appointmentDefaultResponse.setStartDateTime(appointment.getStartDateTime());
+        appointmentDefaultResponse.setEndDateTime(appointment.getEndDateTime());
+        appointmentDefaultResponse.setAppointmentKind(appointment.getAppointmentKind().name());
+        appointmentDefaultResponse.setStatus(appointment.getStatus().name());
+        appointmentDefaultResponse.setComments(appointment.getComments());
+        if (appointmentResponseExtension != null)
+            appointmentDefaultResponse.setAdditionalInfo(appointmentResponseExtension.run(appointment));
+        appointmentDefaultResponse.setProviders(mapAppointmentProviders(appointment.getProviders()));
+        appointmentDefaultResponse.setRecurringPattern(mapRecurringPattern(appointment, appointment.getAppointmentRecurringPattern()));
+        return appointmentDefaultResponse;
+    }
+
+    private RecurringPattern mapRecurringPattern(
+            Appointment appointment, AppointmentRecurringPattern appointmentRecurringPattern) {
+        if(appointmentRecurringPattern == null) {
+            return null;
+        }
+        RecurringPattern recurringPattern = new RecurringPattern();
+        recurringPattern.setType(appointmentRecurringPattern.getType().toString());
+        recurringPattern.setPeriod(appointmentRecurringPattern.getPeriod());
+        Date endDate = appointmentRecurringPattern.getEndDate();
+        if (endDate != null) {
+            recurringPattern.setEndDate(endDate);
+        } else {
+            recurringPattern.setFrequency(getPendingOccurrences(appointment));
+        }
+        ;
+        if (appointmentRecurringPattern.getDaysOfWeek() != null) {
+            recurringPattern.setDaysOfWeek(Arrays.asList(appointmentRecurringPattern
+                    .getDaysOfWeek().split(",")));
+        }
+        return recurringPattern;
+    }
+
+    private int getPendingOccurrences(Appointment appointment) {
+        return Math.toIntExact(
+                appointment.getAppointmentRecurringPattern().getAppointments()
+                        .stream()
+                        .filter(appointmentInList -> appointmentInList.getStartDateTime()
+                                .compareTo(appointment.getStartDateTime()) >= 0
+                                && appointmentInList.getStatus() == AppointmentStatus.Scheduled)
+                        .count());
     }
 
     private List<AppointmentProviderDetail> mapAppointmentProviders(Set<AppointmentProvider> providers) {

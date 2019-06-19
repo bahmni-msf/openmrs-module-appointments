@@ -19,6 +19,15 @@ public class AppointmentDefaultResponse {
 	private String comments;
 	private Map additionalInfo;
 	private List<AppointmentProviderDetail> providers;
+	private RecurringPattern recurringPattern;
+
+	public RecurringPattern getRecurringPattern() {
+		return recurringPattern;
+	}
+
+	public void setRecurringPattern(RecurringPattern recurringPattern) {
+		this.recurringPattern = recurringPattern;
+	}
 
 	public String getUuid() {
 		return uuid;
@@ -55,7 +64,7 @@ public class AppointmentDefaultResponse {
 	public Map getServiceType() {
 		return serviceType;
 	}
-	
+
 	public void setServiceType(Map serviceType) {
 		this.serviceType = serviceType;
 	}
@@ -83,35 +92,35 @@ public class AppointmentDefaultResponse {
 	public void setStartDateTime(Date startDateTime) {
 		this.startDateTime = startDateTime;
 	}
-	
+
 	public Date getEndDateTime() {
 		return endDateTime;
 	}
-	
+
 	public void setEndDateTime(Date endDateTime) {
 		this.endDateTime = endDateTime;
 	}
-	
+
 	public String getAppointmentKind() {
 		return appointmentKind;
 	}
-	
+
 	public void setAppointmentKind(String appointmentKind) {
 		this.appointmentKind = appointmentKind;
 	}
-	
+
 	public String getStatus() {
 		return status;
 	}
-	
+
 	public void setStatus(String status) {
 		this.status = status;
 	}
-	
+
 	public String getComments() {
 		return comments;
 	}
-	
+
 	public void setComments(String comments) {
 		this.comments = comments;
 	}

@@ -1,5 +1,6 @@
 package org.openmrs.module.appointments.web.mapper;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -7,6 +8,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.openmrs.*;
 import org.openmrs.api.LocationService;
@@ -19,9 +21,11 @@ import org.openmrs.module.appointments.service.impl.RecurringAppointmentType;
 import org.openmrs.module.appointments.util.DateUtil;
 import org.openmrs.module.appointments.web.contract.*;
 import org.openmrs.module.appointments.web.extension.AppointmentResponseExtension;
+import org.openmrs.module.appointments.web.util.AppointmentBuilder;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -64,6 +68,14 @@ public class AppointmentMapperTest {
         MockitoAnnotations.initMocks(this);
         patient = new Patient();
         patient.setUuid("patientUuid");
+        PersonName name = new PersonName();
+        name.setGivenName("test patient");
+        Set<PersonName> personNames = new HashSet<>();
+        personNames.add(name);
+        patient.setNames(personNames);
+        PatientIdentifier identifier = new PatientIdentifier();
+        identifier.setIdentifier("GAN230901");
+        patient.setIdentifiers(new HashSet<>(Arrays.asList(identifier)));
         when(patientService.getPatientByUuid("patientUuid")).thenReturn(patient);
         service = new AppointmentServiceDefinition();
         service.setUuid("serviceUuid");
@@ -518,4 +530,204 @@ public class AppointmentMapperTest {
 
     }
 
-}
+    @Test
+    public void shouldSetRecurringPatternWithPendingOccurrencesToAppointment() {
+        AppointmentRecurringPattern appointmentRecurringPattern = new AppointmentRecurringPattern();
+        appointmentRecurringPattern.setType(RecurringAppointmentType.DAY);
+        appointmentRecurringPattern.setFrequency(3);
+        appointmentRecurringPattern.setPeriod(2);
+        Appointment appointmentOne = new AppointmentBuilder()
+                .withUuid("uuid1")
+                .withPatient(patient)
+                .withStatus(AppointmentStatus.Completed)
+                .withAppointmentKind(AppointmentKind.Scheduled)
+                .withStartDateTime(DateUtils.addDays(new Date(), -2))
+                .withEndDateTime(DateUtils.addDays(new Date(), -2))
+                .withAppointmentRecurringPattern(appointmentRecurringPattern)
+                .build();
+        Appointment appointmentTwo = new AppointmentBuilder()
+                .withUuid("uuid2")
+                .withPatient(patient)
+                .withStatus(AppointmentStatus.Scheduled)
+                .withAppointmentKind(AppointmentKind.Scheduled)
+                .withStartDateTime(new Date())
+                .withEndDateTime(new Date())
+                .withAppointmentRecurringPattern(appointmentRecurringPattern)
+                .build();
+        Appointment appointmentThree = new AppointmentBuilder()
+                .withUuid("uuid3")
+                .withPatient(patient)
+                .withStatus(AppointmentStatus.Scheduled)
+                .withAppointmentKind(AppointmentKind.Scheduled)
+                .withStartDateTime(DateUtils.addDays(new Date(), 2))
+                .withEndDateTime(DateUtils.addDays(new Date(), 2))
+                .withAppointmentRecurringPattern(appointmentRecurringPattern)
+                .build();
+        appointmentRecurringPattern
+                .setAppointments(new HashSet<>(Arrays.asList(appointmentOne, appointmentTwo, appointmentThree)));
+        Mockito.when(appointmentsService.getAppointmentByUuid(any(String.class))).thenReturn(appointmentTwo);
+
+        AppointmentDefaultResponse appointmentDefaultResponse = appointmentMapper.constructResponse(appointmentTwo);
+
+        assertEquals(2, appointmentDefaultResponse.getRecurringPattern().getFrequency());
+        assertEquals(RecurringAppointmentType.DAY.name(), appointmentDefaultResponse.getRecurringPattern().getType());
+        assertEquals(2, appointmentDefaultResponse.getRecurringPattern().getPeriod());
+    }
+
+    @Test
+    public void shouldSetOnlyScheduledPendingOccurrencesToRecurringPatternOfAppointment() {
+        AppointmentRecurringPattern appointmentRecurringPattern = new AppointmentRecurringPattern();
+        appointmentRecurringPattern.setType(RecurringAppointmentType.DAY);
+        appointmentRecurringPattern.setFrequency(3);
+        appointmentRecurringPattern.setPeriod(2);
+        Appointment appointmentOne = new AppointmentBuilder()
+                .withUuid("uuid1")
+                .withPatient(patient)
+                .withStatus(AppointmentStatus.Completed)
+                .withAppointmentKind(AppointmentKind.Scheduled)
+                .withStartDateTime(DateUtils.addDays(new Date(), -2))
+                .withEndDateTime(DateUtils.addDays(new Date(), -2))
+                .withAppointmentRecurringPattern(appointmentRecurringPattern)
+                .build();
+        Appointment appointmentTwo = new AppointmentBuilder()
+                .withUuid("uuid2")
+                .withPatient(patient)
+                .withStatus(AppointmentStatus.Scheduled)
+                .withAppointmentKind(AppointmentKind.Scheduled)
+                .withStartDateTime(new Date())
+                .withEndDateTime(new Date())
+                .withAppointmentRecurringPattern(appointmentRecurringPattern)
+                .build();
+        Appointment appointmentThree = new AppointmentBuilder()
+                .withUuid("uuid3")
+                .withPatient(patient)
+                .withStatus(AppointmentStatus.Cancelled)
+                .withAppointmentKind(AppointmentKind.Scheduled)
+                .withStartDateTime(DateUtils.addDays(new Date(), 2))
+                .withEndDateTime(DateUtils.addDays(new Date(), 2))
+                .withAppointmentRecurringPattern(appointmentRecurringPattern)
+                .build();
+        appointmentRecurringPattern
+                .setAppointments(new HashSet<>(Arrays.asList(appointmentOne, appointmentTwo, appointmentThree)));
+
+        AppointmentDefaultResponse appointmentDefaultResponse = appointmentMapper.constructResponse(appointmentTwo);
+
+        assertEquals(1, appointmentDefaultResponse.getRecurringPattern().getFrequency());
+        assertEquals(2, appointmentDefaultResponse.getRecurringPattern().getPeriod());
+        assertNull(appointmentDefaultResponse.getRecurringPattern().getDaysOfWeek());
+        assertEquals(RecurringAppointmentType.DAY.name(), appointmentDefaultResponse.getRecurringPattern().getType());
+    }
+
+    @Test
+    public void shouldReturnNullRecurringPatternWhenAppointmentDoesNotHaveRecurringPattern() throws ParseException {
+        Appointment appointment = createAppointment();
+
+        AppointmentDefaultResponse appointmentDefaultResponse = appointmentMapper.constructResponse(appointment);
+
+        assertNull(appointmentDefaultResponse.getRecurringPattern());
+    }
+
+    @Test
+    public void shouldSetDaysOfWeekToRecurringPatternWhenDaysOfWeekIsNotNull() throws ParseException {
+        AppointmentRecurringPattern appointmentRecurringPattern = new AppointmentRecurringPattern();
+        appointmentRecurringPattern.setType(RecurringAppointmentType.WEEK);
+        appointmentRecurringPattern.setFrequency(1);
+        appointmentRecurringPattern.setPeriod(1);
+        appointmentRecurringPattern.setDaysOfWeek("Monday,Tuesday");
+        Appointment appointmentOne = new AppointmentBuilder()
+                .withUuid("uuid1")
+                .withPatient(patient)
+                .withStatus(AppointmentStatus.Completed)
+                .withAppointmentKind(AppointmentKind.Scheduled)
+                .withStartDateTime(new SimpleDateFormat("dd/MM/yyyy").parse("17/06/2019"))
+                .withEndDateTime(new SimpleDateFormat("dd/MM/yyyy").parse("17/06/2019"))
+                .withAppointmentRecurringPattern(appointmentRecurringPattern)
+                .build();
+        Appointment appointmentTwo = new AppointmentBuilder()
+                .withUuid("uuid2")
+                .withPatient(patient)
+                .withStatus(AppointmentStatus.Scheduled)
+                .withAppointmentKind(AppointmentKind.Scheduled)
+                .withStartDateTime(new SimpleDateFormat("dd/MM/yyyy").parse("18/06/2019"))
+                .withEndDateTime(new SimpleDateFormat("dd/MM/yyyy").parse("18/06/2019"))
+                .withAppointmentRecurringPattern(appointmentRecurringPattern)
+                .build();
+        appointmentRecurringPattern
+                .setAppointments(new HashSet<>(Arrays.asList(appointmentOne, appointmentTwo)));
+
+        AppointmentDefaultResponse appointmentDefaultResponse = appointmentMapper.constructResponse(appointmentTwo);
+
+        assertEquals(1, appointmentDefaultResponse.getRecurringPattern().getFrequency());
+        assertEquals(1, appointmentDefaultResponse.getRecurringPattern().getPeriod());
+        assertEquals(RecurringAppointmentType.WEEK.name(), appointmentDefaultResponse.getRecurringPattern().getType());
+        assertEquals(Arrays.asList("Monday", "Tuesday"),
+                appointmentDefaultResponse.getRecurringPattern().getDaysOfWeek());
+    }
+
+    @Test
+    public void shouldSetPendingOccurencesAsZeroWhenRecurringPatternHasEndDate() throws ParseException {
+        AppointmentRecurringPattern appointmentRecurringPattern = new AppointmentRecurringPattern();
+        appointmentRecurringPattern.setType(RecurringAppointmentType.WEEK);
+        appointmentRecurringPattern.setEndDate(new Date());
+        appointmentRecurringPattern.setPeriod(1);
+        appointmentRecurringPattern.setDaysOfWeek("Monday,Tuesday");
+        Appointment appointmentOne = new AppointmentBuilder()
+                .withUuid("uuid1")
+                .withPatient(patient)
+                .withStatus(AppointmentStatus.Completed)
+                .withAppointmentKind(AppointmentKind.Scheduled)
+                .withStartDateTime(new SimpleDateFormat("dd/MM/yyyy").parse("17/06/2019"))
+                .withEndDateTime(new SimpleDateFormat("dd/MM/yyyy").parse("17/06/2019"))
+                .withAppointmentRecurringPattern(appointmentRecurringPattern)
+                .build();
+        Appointment appointmentTwo = new AppointmentBuilder()
+                .withUuid("uuid2")
+                .withPatient(patient)
+                .withStatus(AppointmentStatus.Scheduled)
+                .withAppointmentKind(AppointmentKind.Scheduled)
+                .withStartDateTime(new SimpleDateFormat("dd/MM/yyyy").parse("18/06/2019"))
+                .withEndDateTime(new SimpleDateFormat("dd/MM/yyyy").parse("18/06/2019"))
+                .withAppointmentRecurringPattern(appointmentRecurringPattern)
+                .build();
+        appointmentRecurringPattern
+                .setAppointments(new HashSet<>(Arrays.asList(appointmentOne, appointmentTwo)));
+
+        AppointmentDefaultResponse appointmentDefaultResponse = appointmentMapper.constructResponse(appointmentTwo);
+
+        assertEquals(0,appointmentDefaultResponse.getRecurringPattern().getFrequency());
+    }
+
+    @Test
+    public void shouldSetEndDateAsNullWhenRecurringPatternHasFrequency() throws ParseException {
+        AppointmentRecurringPattern appointmentRecurringPattern = new AppointmentRecurringPattern();
+        appointmentRecurringPattern.setType(RecurringAppointmentType.WEEK);
+        appointmentRecurringPattern.setPeriod(2);
+        appointmentRecurringPattern.setFrequency(2);
+        appointmentRecurringPattern.setDaysOfWeek("Monday,Tuesday");
+        Appointment appointmentOne = new AppointmentBuilder()
+                .withUuid("uuid1")
+                .withPatient(patient)
+                .withStatus(AppointmentStatus.Completed)
+                .withAppointmentKind(AppointmentKind.Scheduled)
+                .withStartDateTime(new SimpleDateFormat("dd/MM/yyyy").parse("17/06/2019"))
+                .withEndDateTime(new SimpleDateFormat("dd/MM/yyyy").parse("17/06/2019"))
+                .withAppointmentRecurringPattern(appointmentRecurringPattern)
+                .build();
+        Appointment appointmentTwo = new AppointmentBuilder()
+                .withUuid("uuid2")
+                .withPatient(patient)
+                .withStatus(AppointmentStatus.Scheduled)
+                .withAppointmentKind(AppointmentKind.Scheduled)
+                .withStartDateTime(new SimpleDateFormat("dd/MM/yyyy").parse("18/06/2019"))
+                .withEndDateTime(new SimpleDateFormat("dd/MM/yyyy").parse("18/06/2019"))
+                .withAppointmentRecurringPattern(appointmentRecurringPattern)
+                .build();
+        appointmentRecurringPattern
+                .setAppointments(new HashSet<>(Arrays.asList(appointmentOne, appointmentTwo)));
+
+        AppointmentDefaultResponse appointmentDefaultResponse = appointmentMapper.constructResponse(appointmentTwo);
+
+        assertNull(appointmentDefaultResponse.getRecurringPattern().getEndDate());
+    }
+    }
+
