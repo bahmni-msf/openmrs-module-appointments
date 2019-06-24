@@ -66,5 +66,8 @@ public interface AppointmentsService {
     @Authorized({"Manage Appointments"})
     Appointment reschedule(String originalAppointmentUuid, Appointment appointment, boolean retainAppointmentNumber);
 
+    @Transactional
+    @Authorized({MANAGE_APPOINTMENTS, MANAGE_OWN_APPOINTMENTS})
+    Appointment update(Appointment appointment);
 }
 
