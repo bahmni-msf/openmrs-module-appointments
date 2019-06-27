@@ -154,7 +154,7 @@ public class AppointmentController {
             }else
                 throw new RuntimeException("Appointment does not exist");
         } catch (RuntimeException e) {
-            log.error("Runtime error while trying to update appointment status", e);
+            log.error("Runtime error while trying to validateAndUpdate appointment status", e);
             return new ResponseEntity<>(RestUtil.wrapErrorResponse(e, e.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
@@ -198,7 +198,7 @@ public class AppointmentController {
             appointmentsService.updateAppointmentProviderResponse(appointmentProviderProvider);
             return new ResponseEntity<>(HttpStatus.OK);
         }catch (RuntimeException e) {
-            log.error("Runtime error while trying to update appointment provider response", e);
+            log.error("Runtime error while trying to validateAndUpdate appointment provider response", e);
             return new ResponseEntity<>(RestUtil.wrapErrorResponse(e, e.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
@@ -221,7 +221,7 @@ public class AppointmentController {
         }
     }
 
-    @RequestMapping(method = RequestMethod.PUT, value="/{appointmentUuid}")
+    @RequestMapping(method = RequestMethod.PUT, value = "/{appointmentUuid}")
     @ResponseBody
     public ResponseEntity<Object> editAppointment(@Valid @RequestBody AppointmentRequest appointmentRequest) {
         try {
@@ -229,14 +229,14 @@ public class AppointmentController {
             boolean applyForAll = appointmentRequest.getApplyForAll().isPresent() ?
                     appointmentRequest.getApplyForAll().get() : false;
             if (applyForAll) {
-                List<Appointment> updatedAppointments = recurringAppointmentService.update(appointment);
+                List<Appointment> updatedAppointments = recurringAppointmentService.validateAndUpdate(appointment);
                 return new ResponseEntity<>(appointmentMapper.constructResponse(updatedAppointments), HttpStatus.OK);
             } else {
-                Appointment updatedAppointment = appointmentsService.update(appointment);
+                Appointment updatedAppointment = appointmentsService.validateAndUpdate(appointment);
                 return new ResponseEntity<>(appointmentMapper.constructResponse(updatedAppointment), HttpStatus.OK);
             }
         } catch (RuntimeException e) {
-            log.error("Runtime error while trying to update an appointment", e);
+            log.error("Runtime error while trying to validateAndUpdate an appointment", e);
             return new ResponseEntity<>(RestUtil.wrapErrorResponse(e, e.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
