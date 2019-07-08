@@ -21,7 +21,14 @@ import org.openmrs.messagesource.MessageSourceService;
 import org.openmrs.module.appointments.dao.AppointmentAuditDao;
 import org.openmrs.module.appointments.dao.AppointmentDao;
 import org.openmrs.module.appointments.helper.AppointmentServiceHelper;
-import org.openmrs.module.appointments.model.*;
+import org.openmrs.module.appointments.model.Appointment;
+import org.openmrs.module.appointments.model.AppointmentAudit;
+import org.openmrs.module.appointments.model.AppointmentKind;
+import org.openmrs.module.appointments.model.AppointmentProvider;
+import org.openmrs.module.appointments.model.AppointmentProviderResponse;
+import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
+import org.openmrs.module.appointments.model.AppointmentServiceType;
+import org.openmrs.module.appointments.model.AppointmentStatus;
 import org.openmrs.module.appointments.util.DateUtil;
 import org.openmrs.module.appointments.validator.AppointmentStatusChangeValidator;
 import org.openmrs.module.appointments.validator.AppointmentValidator;
@@ -44,7 +51,6 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -244,7 +250,8 @@ public class AppointmentsServiceImplTest {
     @Test
     public void shouldThrowExceptionIfValidationFailsOnAppointmentSave() {
         String errorMessage = "Appointment cannot be created without Patient";
-        doThrow(new APIException(errorMessage)).when(appointmentServiceHelper).validate(any(Appointment.class), anyListOf(AppointmentValidator.class));
+        doThrow(new APIException(errorMessage)).when(appointmentServiceHelper)
+                .validate(any(Appointment.class), anyListOf(AppointmentValidator.class));
         expectedException.expect(APIException.class);
         expectedException.expectMessage(errorMessage);
         appointmentsService.validateAndSave(new Appointment());
@@ -256,19 +263,19 @@ public class AppointmentsServiceImplTest {
         Appointment appointment = new Appointment();
         appointment.setStatus(AppointmentStatus.Scheduled);
         appointmentsService.changeStatus(appointment, "CheckedIn", null);
-        verify(appointmentServiceHelper, times(1)).validateStatusChange(any(Appointment.class), any(AppointmentStatus.class), anyListOf(String.class), anyListOf(AppointmentStatusChangeValidator.class));
+        verify(appointmentServiceHelper, times(1))
+                .validateStatusChangeAndGetErrors(any(Appointment.class),
+                        any(AppointmentStatus.class),
+                        anyListOf(AppointmentStatusChangeValidator.class));
     }
 
     @Test
     public void shouldThrowExceptionIfValidationFailsOnStatusChange() {
         String errorMessage = "Appointment status cannot be changed from Completed to Missed";
-        doAnswer(invocation -> {
-            Object[] args = invocation.getArguments();
-            List<String> errors = (List) args[2];
-            errors.add(errorMessage);
-            return null;
-        }).when(appointmentServiceHelper).validateStatusChange(any(Appointment.class), any(AppointmentStatus.class), anyListOf(String.class), anyListOf(AppointmentStatusChangeValidator.class));
-
+        doThrow(new APIException(errorMessage)).when(appointmentServiceHelper)
+                .validateStatusChangeAndGetErrors(any(Appointment.class),
+                        any(AppointmentStatus.class),
+                        anyListOf(AppointmentStatusChangeValidator.class));
         Appointment appointment = new Appointment();
         appointment.setStatus(AppointmentStatus.Completed);
         expectedException.expect(APIException.class);
