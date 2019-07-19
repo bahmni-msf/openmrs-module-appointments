@@ -141,6 +141,25 @@
             <ref bean="transactionAttributeSource"/>
         </property>
     </bean>
+    <bean id="singleRecurringAppointmentService"
+          class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager">
+            <ref bean="transactionManager"/>
+        </property>
+        <property name="target">
+            <bean class="org.openmrs.module.appointments.service.impl.SingleRecurringAppointmentService">
+                <property name="recurringAppointmentService">
+                    <ref bean="recurringAppointmentService"/>
+                </property>
+            </bean>
+        </property>
+        <property name="preInterceptors">
+            <ref bean="serviceInterceptors"/>
+        </property>
+        <property name="transactionAttributeSource">
+            <ref bean="transactionAttributeSource"/>
+        </property>
+    </bean>
 
     <bean id="appointmentDao" class="org.openmrs.module.appointments.dao.impl.AppointmentDaoImpl">
         <property name="sessionFactory">
@@ -159,6 +178,7 @@
             <ref bean="sessionFactory"/>
         </property>
     </bean>
+
 
     <bean parent="serviceContext">
         <property name="moduleService">

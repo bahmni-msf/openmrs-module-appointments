@@ -126,6 +126,11 @@ public class RecurringAppointmentServiceImpl implements RecurringAppointmentServ
                 .collect(Collectors.toList());
     }
 
+
+    public AppointmentRecurringPattern getAppointmentRecurringPatternFrom(Appointment appointment){
+        return null;
+    };
+
     private void updateMetadata(Appointment pendingAppointment, Appointment appointment) {
         Date startTime = getStartTime(pendingAppointment, appointment);
         Date endTime = getEndTime(pendingAppointment, appointment);
@@ -263,5 +268,9 @@ public class RecurringAppointmentServiceImpl implements RecurringAppointmentServ
         } else {
             appointment.setAppointmentAudits(new HashSet<>(Collections.singletonList(appointmentAudit)));
         }
+    }
+
+    public List<Appointment> validateAndUpdate(AppointmentRecurringPattern appointmentRecurringPattern){
+        return null;
     }
 }

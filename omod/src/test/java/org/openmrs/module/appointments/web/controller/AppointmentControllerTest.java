@@ -17,6 +17,8 @@ import org.openmrs.module.appointments.model.AppointmentStatus;
 import org.openmrs.module.appointments.service.AppointmentServiceDefinitionService;
 import org.openmrs.module.appointments.service.AppointmentsService;
 import org.openmrs.module.appointments.service.RecurringAppointmentService;
+import org.openmrs.module.appointments.service.impl.RecurringAppointmentServiceImpl;
+import org.openmrs.module.appointments.service.impl.SingleRecurringAppointmentService;
 import org.openmrs.module.appointments.util.DateUtil;
 import org.openmrs.module.appointments.web.contract.*;
 import org.openmrs.module.appointments.web.helper.RecurringPatternHelper;
@@ -34,10 +36,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -49,6 +48,9 @@ public class AppointmentControllerTest {
 
     @Mock
     private RecurringAppointmentService recurringAppointmentService;
+
+    @Mock
+    private SingleRecurringAppointmentService singleRecurringAppointmentService;
 
     @Mock
     private RecurringPatternHelper recurringPatternHelper;
@@ -415,5 +417,30 @@ public class AppointmentControllerTest {
         Mockito.verify(appointmentMapper, never()).fromRequest(any());
         assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     }
+
+    @Test
+    public void shouldUpdateSingleRecurringAppointmentByCreatingANewAppointmentReferencingTheExisitngAppointment(){
+        AppointmentRequest appointmentRequest = mock(AppointmentRequest.class);
+
+        when(appointmentRequest.isRecurringAppointment()).thenReturn(true);
+        when(appointmentRequest.requiresUpdateOfAllRecurringAppointments()).thenReturn(false);
+
+        AppointmentRecurringPattern appointmentRecurringPattern = mock(AppointmentRecurringPattern.class);
+        Appointment appointment = mock(Appointment.class);
+        when(appointmentMapper.fromRequest(appointmentRequest)).thenReturn(appointment);
+        when(singleRecurringAppointmentService.getAppointmentRecurringPatternFrom(appointment)).thenReturn(appointmentRecurringPattern);
+        when(singleRecurringAppointmentService.validateAndUpdate(appointmentRecurringPattern)).thenReturn(mock(List.class));
+
+        final ResponseEntity<Object> responseEntity = appointmentController.editAppointment(appointmentRequest);
+
+        Mockito.verify(singleRecurringAppointmentService, times(1)).getAppointmentRecurringPatternFrom(appointment);
+        Mockito.verify(singleRecurringAppointmentService, times(1)).validateAndUpdate(appointmentRecurringPattern);
+        Mockito.verify(appointmentMapper, times(1)).fromRequest(appointmentRequest);
+
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    }
+
+
 
 }

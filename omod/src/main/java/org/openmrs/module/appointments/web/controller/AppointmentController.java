@@ -12,6 +12,8 @@ import org.openmrs.module.appointments.model.AppointmentStatus;
 import org.openmrs.module.appointments.service.AppointmentServiceDefinitionService;
 import org.openmrs.module.appointments.service.AppointmentsService;
 import org.openmrs.module.appointments.service.RecurringAppointmentService;
+import org.openmrs.module.appointments.service.impl.RecurringAppointmentServiceImpl;
+import org.openmrs.module.appointments.service.impl.SingleRecurringAppointmentService;
 import org.openmrs.module.appointments.util.DateUtil;
 import org.openmrs.module.appointments.web.contract.*;
 import org.openmrs.module.appointments.web.helper.RecurringPatternHelper;
@@ -21,6 +23,7 @@ import org.openmrs.module.appointments.web.mapper.AppointmentServiceMapper;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.RestUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -44,7 +47,7 @@ public class AppointmentController {
     private AppointmentsService appointmentsService;
 
     @Autowired
-    private RecurringAppointmentService recurringAppointmentService;
+    private SingleRecurringAppointmentService singleRecurringAppointmentService;
 
     @Autowired
     private AppointmentServiceDefinitionService appointmentServiceDefinitionService;
@@ -100,7 +103,7 @@ public class AppointmentController {
         List<Appointment> appointmentsList = recurringPatternHelper.generateRecurringAppointments(appointmentRecurringPattern,
                 appointmentRequest);
         appointmentRecurringPattern.setAppointments(new HashSet<>(appointmentsList));
-        recurringAppointmentService.validateAndSave(appointmentRecurringPattern);
+        singleRecurringAppointmentService.validateAndSave(appointmentRecurringPattern);
         return new ResponseEntity<>(appointmentMapper.constructResponse(new ArrayList<>(appointmentRecurringPattern.getAppointments())), HttpStatus.OK);
     }
 
@@ -168,7 +171,7 @@ public class AppointmentController {
                     if (!StringUtils.hasText(clientTimeZone)) {
                         throw new APIException("Time Zone is missing");
                     }
-                    recurringAppointmentService.changeStatus(appointment, toStatus, onDate, clientTimeZone);
+                    singleRecurringAppointmentService.changeStatus(appointment, toStatus, onDate, clientTimeZone);
                 } else {
                     appointmentsService.changeStatus(appointment, toStatus, onDate);
                 }
@@ -248,8 +251,7 @@ public class AppointmentController {
     @ResponseBody
     public ResponseEntity<Object> editAppointment(@Valid @RequestBody AppointmentRequest appointmentRequest) {
         try {
-            boolean applyForAll = appointmentRequest.getApplyForAll() == null
-                    ? false : appointmentRequest.getApplyForAll();
+            boolean applyForAll = appointmentRequest.requiresUpdateOfAllRecurringAppointments();
             if (applyForAll) {
                 String clientTimeZone = appointmentRequest.getTimeZone();
                 if (!StringUtils.hasText(clientTimeZone)) {
@@ -259,12 +261,21 @@ public class AppointmentController {
                 appointmentRequest.setUuid(null);
                 Appointment appointment = appointmentMapper.fromRequest(appointmentRequest);
                 appointment.setUuid(appointmentUuid);
-                List<Appointment> updatedAppointments = recurringAppointmentService.validateAndUpdate(appointment, clientTimeZone);
+                List<Appointment> updatedAppointments = singleRecurringAppointmentService.validateAndUpdate(appointment, clientTimeZone);
                 return new ResponseEntity<>(appointmentMapper.constructResponse(updatedAppointments), HttpStatus.OK);
             } else {
-                Appointment appointment = appointmentMapper.fromRequest(appointmentRequest);
-                Appointment updatedAppointment = appointmentsService.validateAndUpdate(appointment);
-                return new ResponseEntity<>(appointmentMapper.constructResponse(updatedAppointment), HttpStatus.OK);
+                if(appointmentRequest.isRecurringAppointment()){
+                    Appointment appointment = appointmentMapper.fromRequest(appointmentRequest);
+                    final AppointmentRecurringPattern appointmentRecurringPattern
+                            = singleRecurringAppointmentService.getAppointmentRecurringPatternFrom(appointment);
+                    final List<Appointment> appointments = singleRecurringAppointmentService.validateAndUpdate(appointmentRecurringPattern);
+                    return new ResponseEntity<>(appointmentMapper.constructResponse(appointments), HttpStatus.OK);
+                }
+                else {
+                    Appointment appointment = appointmentMapper.fromRequest(appointmentRequest);
+                    Appointment updatedAppointment = appointmentsService.validateAndUpdate(appointment);
+                    return new ResponseEntity<>(appointmentMapper.constructResponse(updatedAppointment), HttpStatus.OK);
+                }
             }
         } catch (RuntimeException e) {
             log.error("Runtime error while trying to validateAndUpdate an appointment", e);
