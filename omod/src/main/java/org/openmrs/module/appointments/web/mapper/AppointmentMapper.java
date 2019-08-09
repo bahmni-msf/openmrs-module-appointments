@@ -37,10 +37,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.openmrs.module.appointments.service.impl.RecurringAppointmentType.DAY;
-import static org.openmrs.module.appointments.service.impl.RecurringAppointmentType.WEEK;
-import static org.openmrs.module.appointments.service.impl.RecurringAppointmentType.valueOf;
-
 @Component
 public class AppointmentMapper {
     @Autowired
@@ -80,6 +76,11 @@ public class AppointmentMapper {
             appointment = new Appointment();
             appointment.setPatient(patientService.getPatientByUuid(appointmentRequest.getPatientUuid()));
         }
+        mapAppointmentRequestToAppointment(appointmentRequest, appointment);
+        return appointment;
+    }
+
+    public void mapAppointmentRequestToAppointment(AppointmentRequest appointmentRequest, Appointment appointment) {
         AppointmentServiceDefinition appointmentServiceDefinition = appointmentServiceDefinitionService.getAppointmentServiceByUuid(appointmentRequest.getServiceUuid());
         AppointmentServiceType appointmentServiceType = null;
         if(appointmentRequest.getServiceTypeUuid() != null) {
@@ -94,25 +95,6 @@ public class AppointmentMapper {
         appointment.setAppointmentKind(AppointmentKind.valueOf(appointmentRequest.getAppointmentKind()));
         appointment.setComments(appointmentRequest.getComments());
         mapProvidersForAppointment(appointment, appointmentRequest.getProviders());
-        return appointment;
-    }
-
-    public AppointmentRecurringPattern fromRequestRecurringPattern(RecurringPattern recurringPattern) {
-        AppointmentRecurringPattern appointmentRecurringPattern = new AppointmentRecurringPattern();
-        appointmentRecurringPattern.setEndDate(recurringPattern.getEndDate());
-        appointmentRecurringPattern.setPeriod(recurringPattern.getPeriod());
-        appointmentRecurringPattern.setFrequency(recurringPattern.getFrequency());
-        String recurringPatternType = recurringPattern.getType();
-        if (recurringPatternType == null) {
-            throw new IllegalArgumentException(String
-                    .format("Valid recurrence type should be provided. Valid types are %s and %s",  DAY, WEEK));
-        }
-        appointmentRecurringPattern.setType(valueOf(recurringPatternType.toUpperCase()));
-        if (appointmentRecurringPattern.getType() == WEEK) {
-            appointmentRecurringPattern.setDaysOfWeek(recurringPattern.getDaysOfWeek().stream().map(String::toUpperCase)
-                    .collect(Collectors.joining(",")));
-        }
-        return appointmentRecurringPattern;
     }
 
     private Provider identifyAppointmentProvider(String providerUuid) {

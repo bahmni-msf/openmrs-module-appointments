@@ -34,20 +34,19 @@ import static org.openmrs.module.appointments.constants.PrivilegeConstants.MANAG
 @Transactional
 public class AppointmentsServiceImpl implements AppointmentsService {
 
-    private static final int EMPTY_SET_SIZE = 0;
     private Log log = LogFactory.getLog(this.getClass());
 
-    AppointmentDao appointmentDao;
+    private AppointmentDao appointmentDao;
 
-    List<AppointmentStatusChangeValidator> statusChangeValidators;
+    private List<AppointmentStatusChangeValidator> statusChangeValidators;
 
-    List<AppointmentValidator> appointmentValidators;
+    private List<AppointmentValidator> appointmentValidators;
 
-    List<AppointmentValidator> editAppointmentValidators;
+    private List<AppointmentValidator> editAppointmentValidators;
 
-    AppointmentAuditDao appointmentAuditDao;
+    private AppointmentAuditDao appointmentAuditDao;
 
-    AppointmentServiceHelper appointmentServiceHelper;
+    private AppointmentServiceHelper appointmentServiceHelper;
 
     public void setAppointmentDao(AppointmentDao appointmentDao) {
         this.appointmentDao = appointmentDao;
@@ -91,20 +90,31 @@ public class AppointmentsServiceImpl implements AppointmentsService {
 
     @Override
     public Appointment validateAndSave(Appointment appointment) throws APIException {
+        validate(appointment, appointmentValidators );
+        appointmentServiceHelper.checkAndAssignAppointmentNumber(appointment);
+        save(appointment);
+        return appointment;
+    }
+
+    @Override
+    public Appointment validateAndUpdate(Appointment appointment) throws APIException {
+        validate(appointment, editAppointmentValidators );
+        save(appointment);
+        return appointment;
+    }
+
+    private void save(Appointment appointment) {
+        createAndSetAppointmentAudit(appointment);
+        appointmentDao.save(appointment);
+    }
+
+    @Override
+    public void validate(Appointment appointment, List<AppointmentValidator> appointmentValidators) {
         if (!validateIfUserHasSelfOrAllAppointmentsAccess(appointment)) {
             throw new APIAuthenticationException(Context.getMessageSourceService().getMessage("error.privilegesRequired",
                     new Object[] { MANAGE_APPOINTMENTS }, null));
         }
         appointmentServiceHelper.validate(appointment, appointmentValidators);
-		appointmentServiceHelper.checkAndAssignAppointmentNumber(appointment);
-		appointmentDao.save(appointment);
-		try {
-			createEventInAppointmentAudit(appointment,
-					appointmentServiceHelper.getAppointmentAsJsonString(appointment));
-		} catch (IOException e) {
-			throw new APIException(e);
-		}
-		return appointment;
     }
 
     @Override
@@ -228,25 +238,23 @@ public class AppointmentsServiceImpl implements AppointmentsService {
         }
     }
 
-    @Override
-    public Appointment validateAndUpdate(Appointment appointment) {
-        appointmentServiceHelper.validate(appointment, editAppointmentValidators);
-        AppointmentAudit appointmentAudit;
-        try {
-            appointmentAudit = appointmentServiceHelper.getAppointmentAuditEvent(appointment,
-                    appointmentServiceHelper.getAppointmentAsJsonString(appointment));
-        } catch (IOException e) {
-            throw new APIException(e);
-        }
-        appointment.getAppointmentAudits().addAll(new HashSet<>(Collections.singleton(appointmentAudit)));
-        appointmentDao.save(appointment);
 
-        return appointment;
-    }
 
     private void createEventInAppointmentAudit(Appointment appointment,
                                                String notes) {
         AppointmentAudit appointmentAuditEvent = appointmentServiceHelper.getAppointmentAuditEvent(appointment, notes);
         appointmentAuditDao.save(appointmentAuditEvent);
+    }
+
+    private void createAndSetAppointmentAudit(Appointment appointment) {
+        AppointmentAudit appointmentAudit;
+        try {
+            String notes = appointmentServiceHelper.getAppointmentAsJsonString(appointment);
+            appointmentAudit = appointmentServiceHelper.getAppointmentAuditEvent(appointment, notes);
+        } catch (IOException e) {
+            throw new APIException(e);
+        }
+        Set<AppointmentAudit> appointmentAudits = appointment.getAppointmentAudits();
+        appointmentAudits.addAll(new HashSet<>(Collections.singleton(appointmentAudit)));
     }
 }

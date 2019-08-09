@@ -5,6 +5,7 @@ import org.openmrs.module.appointments.service.impl.RecurringAppointmentType;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AppointmentRecurringPattern {
 
@@ -70,6 +71,15 @@ public class AppointmentRecurringPattern {
 
     public void setAppointments(Set<Appointment> appointments) {
         this.appointments = appointments;
+    }
+
+    public Boolean isAppointmentsEmptyOrNull (){
+        return this.appointments == null || this.appointments.isEmpty();
+    }
+
+    public Set<Appointment> getActiveAppointments() {
+        return getAppointments().stream()
+                .filter(appointment -> !appointment.getVoided()).collect(Collectors.toSet());
     }
 
 }
