@@ -69,10 +69,6 @@ public interface AppointmentsService {
 
     @Transactional
     @Authorized({MANAGE_APPOINTMENTS, MANAGE_OWN_APPOINTMENTS})
-    Appointment validateAndUpdate(Appointment appointment);
-
-    @Transactional
-    @Authorized({MANAGE_APPOINTMENTS, MANAGE_OWN_APPOINTMENTS})
     void validate(Appointment appointment, List<AppointmentValidator> appointmentValidators);
 }
 
