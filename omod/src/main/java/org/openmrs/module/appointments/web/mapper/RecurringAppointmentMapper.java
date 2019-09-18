@@ -1,6 +1,7 @@
 package org.openmrs.module.appointments.web.mapper;
 
 import org.openmrs.module.appointments.model.Appointment;
+import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.web.contract.AppointmentDefaultResponse;
 import org.openmrs.module.appointments.web.contract.RecurringAppointmentDefaultResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,4 +35,14 @@ public class RecurringAppointmentMapper {
                 recurringPatternMapper.mapToResponse(appointment.getAppointmentRecurringPattern()));
         return recurringAppointmentDefaultResponse;
     }
+
+//    public RecurringAppointmentDefaultResponse constructResponse(List<AppointmentConflict> appointmentConflicts) {
+//        RecurringAppointmentDefaultResponse recurringAppointmentDefaultResponse =
+//                new RecurringAppointmentDefaultResponse();
+//        AppointmentDefaultResponse appointmentDefaultResponse = appointmentMapper.constructResponse(appointment);
+//        recurringAppointmentDefaultResponse.setAppointmentDefaultResponse(appointmentDefaultResponse);
+//        recurringAppointmentDefaultResponse.setRecurringPattern(
+//                recurringPatternMapper.mapToResponse(appointment.getAppointmentRecurringPattern()));
+//        return recurringAppointmentDefaultResponse;
+//    }
 }

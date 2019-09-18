@@ -2,6 +2,7 @@ package org.openmrs.module.appointments.service;
 
 
 import org.openmrs.annotation.Authorized;
+import org.openmrs.logic.op.In;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentProvider;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
@@ -70,5 +71,10 @@ public interface AppointmentsService {
     @Transactional
     @Authorized({MANAGE_APPOINTMENTS, MANAGE_OWN_APPOINTMENTS})
     void validate(Appointment appointment, List<AppointmentValidator> appointmentValidators);
+
+    @Transactional
+    @Authorized({VIEW_APPOINTMENTS})
+    List<Appointment> getAppointmentsForPatient(Integer appointmentId, Integer patientId);
+
 }
 

@@ -28,10 +28,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -286,5 +286,24 @@ public class RecurringAppointmentsControllerTest {
         Mockito.verify(appointmentRecurringPatternService, never()).changeStatus(any(),any(), any());
         assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
         assertEquals(((Map)((Map)responseEntity.getBody()).get("error")).get("message"), "Appointment does not exist");
+    }
+
+    @Test
+    public void shouldReturnAppointmentConflictsResponse()
+    {
+        RecurringAppointmentRequest recurringAppointmentRequest = new RecurringAppointmentRequest();
+        recurringAppointmentRequest.setAppointmentRequest(new AppointmentRequest());
+        RecurringPattern recurringPattern = new RecurringPattern();
+        recurringAppointmentRequest.getAppointmentRequest().setStartDateTime(new Date());
+        recurringAppointmentRequest.getAppointmentRequest().setUuid("someUuid");
+        recurringAppointmentRequest.getAppointmentRequest().setServiceUuid("someServiceUuid");
+        recurringAppointmentRequest.setRecurringPattern(recurringPattern);
+        Appointment appointmentOne = new Appointment();
+        appointmentOne.setUuid("appointmentUuid");
+        Appointment appointmentTwo = new Appointment();
+        appointmentTwo.setUuid("appointmentUuid");
+
+        ResponseEntity<Object> responseEntity = recurringAppointmentsController.conflicts(recurringAppointmentRequest);
+        assertNull(responseEntity);
     }
 }

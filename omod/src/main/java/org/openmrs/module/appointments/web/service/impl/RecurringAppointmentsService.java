@@ -1,6 +1,8 @@
 package org.openmrs.module.appointments.web.service.impl;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.openmrs.module.appointments.model.Appointment;
+import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentRecurringPattern;
 import org.openmrs.module.appointments.service.impl.RecurringAppointmentType;
 import org.openmrs.module.appointments.web.contract.RecurringAppointmentRequest;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Component
@@ -23,20 +26,35 @@ public class RecurringAppointmentsService {
     @Qualifier("weeklyRecurringAppointmentsGenerationService")
     AbstractRecurringAppointmentsService weeklyRecurringAppointmentsGenerationService;
 
+    @Autowired
+    AbstractRecurringAppointmentsService abstractRecurringAppointmentsService;
+
     //todo Use strategy for day, week and month logics
     public List<Appointment> generateRecurringAppointments(RecurringAppointmentRequest recurringAppointmentRequest) {
-        List<Appointment> appointments = new ArrayList<>();
+        List<Pair<Date, Date>> appointmentDates = generateAppointmentDates(recurringAppointmentRequest);
+        List<Appointment> appointments = abstractRecurringAppointmentsService
+                .createAppointments(appointmentDates, recurringAppointmentRequest.getAppointmentRequest());
+        return abstractRecurringAppointmentsService.sort(appointments);
+    }
+
+    private List<Pair<Date, Date>> generateAppointmentDates(RecurringAppointmentRequest recurringAppointmentRequest) {
+        List<Pair<Date, Date>> appointmentDates = new ArrayList<>();
         RecurringAppointmentType recurringAppointmentType =
                 RecurringAppointmentType.valueOf(recurringAppointmentRequest.getRecurringPattern().getType().toUpperCase());
         switch (recurringAppointmentType) {
             case WEEK:
-                appointments = weeklyRecurringAppointmentsGenerationService.generateAppointments(recurringAppointmentRequest);
+                appointmentDates = weeklyRecurringAppointmentsGenerationService.generateAppointmentDates(recurringAppointmentRequest);
                 break;
             case DAY:
-                appointments = dailyRecurringAppointmentsGenerationService.generateAppointments(recurringAppointmentRequest);
+                appointmentDates = dailyRecurringAppointmentsGenerationService.generateAppointmentDates(recurringAppointmentRequest);
                 break;
         }
-        return appointments;
+        return appointmentDates;
+    }
+
+    public List<AppointmentConflict> generateAppointmentsConflict(RecurringAppointmentRequest recurringAppointmentRequest) {
+        List<Pair<Date, Date>> appointmentDates = generateAppointmentDates(recurringAppointmentRequest);
+        return abstractRecurringAppointmentsService.getAppointmentConflicts(appointmentDates, recurringAppointmentRequest.getAppointmentRequest(), recurringAppointmentRequest.getRecurringPattern().getDaysOfWeek());
     }
 
     public List<Appointment> getUpdatedSetOfAppointments(AppointmentRecurringPattern appointmentRecurringPattern,

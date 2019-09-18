@@ -27,7 +27,7 @@ public class WeeklyRecurringAppointmentsGenerationService extends AbstractRecurr
     private RecurringAppointmentRequest recurringAppointmentRequest;
 
     @Override
-    public List<Appointment> generateAppointments(RecurringAppointmentRequest recurringAppointmentRequest) {
+    public List<Pair<Date, Date>> generateAppointmentDates(RecurringAppointmentRequest recurringAppointmentRequest) {
         this.recurringAppointmentRequest = recurringAppointmentRequest;
         RecurringPattern recurringPattern = recurringAppointmentRequest.getRecurringPattern();
         Date endDate = getEndDate(recurringPattern.getPeriod(), recurringPattern.getFrequency(),
@@ -37,8 +37,7 @@ public class WeeklyRecurringAppointmentsGenerationService extends AbstractRecurr
                 DateUtil.getCalendar(recurringAppointmentRequest.getAppointmentRequest().getStartDateTime()),
                 DateUtil.getCalendar(recurringAppointmentRequest.getAppointmentRequest().getEndDateTime()),
                 selectedDayCodes);
-        List<Appointment> appointments = createAppointments(appointmentDates, recurringAppointmentRequest.getAppointmentRequest());
-        return sort(appointments);
+        return appointmentDates;
     }
 
     public Date getEndDate(int period, Integer frequency, Date endDate, List<String> daysOfWeek) {

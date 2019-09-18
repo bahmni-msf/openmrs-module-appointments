@@ -1,9 +1,11 @@
 package org.openmrs.module.appointments.web.validators;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.openmrs.api.APIException;
 import org.openmrs.module.appointments.service.impl.RecurringAppointmentType;
 import org.openmrs.module.appointments.web.contract.RecurringPattern;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
@@ -67,5 +69,13 @@ public class RecurringPatternValidator implements Validator {
 
     private boolean hasValidFrequencyOrEndDate(Integer frequency, Date endDate) {
         return (frequency != null && frequency > 0) || endDate != null;
+    }
+
+    public void isValidRecurringPattern(RecurringPattern recurringPattern) {
+        Errors errors = new BeanPropertyBindingResult(recurringPattern, "recurringPattern");
+        validate(recurringPattern, errors);
+        if (!errors.getAllErrors().isEmpty()) {
+            throw new APIException(errors.getAllErrors().get(0).getCodes()[1]);
+        }
     }
 }

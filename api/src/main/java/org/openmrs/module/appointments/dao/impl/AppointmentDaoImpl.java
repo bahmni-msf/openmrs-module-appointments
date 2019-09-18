@@ -117,4 +117,13 @@ public class AppointmentDaoImpl implements AppointmentDao {
         }
         return criteria.list();
     }
+
+    @Override
+    public List<Appointment> getAppointmentsForPatient(Integer appointmentId, Integer patientId) {
+        Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Appointment.class);
+        criteria.add(Restrictions.and(
+                Restrictions.eq("patient_id", patientId),
+                Restrictions.ne("patient_appointment_id", appointmentId)));
+        return criteria.list();
+    }
 }

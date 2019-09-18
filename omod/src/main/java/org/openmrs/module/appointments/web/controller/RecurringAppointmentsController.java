@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.APIException;
 import org.openmrs.module.appointments.model.Appointment;
+import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentRecurringPattern;
 import org.openmrs.module.appointments.service.AppointmentRecurringPatternService;
 import org.openmrs.module.appointments.service.AppointmentsService;
@@ -73,11 +74,7 @@ public class RecurringAppointmentsController {
     public ResponseEntity<Object> save(@RequestBody RecurringAppointmentRequest recurringAppointmentRequest) {
         try {
             RecurringPattern recurringPattern = recurringAppointmentRequest.getRecurringPattern();
-            Errors errors = new BeanPropertyBindingResult(recurringPattern, "recurringPattern");
-            recurringPatternValidator.validate(recurringPattern, errors);
-            if (!errors.getAllErrors().isEmpty()) {
-                throw new APIException(errors.getAllErrors().get(0).getCodes()[1]);
-            }
+            recurringPatternValidator.isValidRecurringPattern(recurringPattern);
             AppointmentRecurringPattern appointmentRecurringPattern = recurringPatternMapper.fromRequest(recurringPattern);
             List<Appointment> appointmentsList = recurringAppointmentsService.generateRecurringAppointments(recurringAppointmentRequest);
             appointmentRecurringPattern.setAppointments(new HashSet<>(appointmentsList));
@@ -86,6 +83,20 @@ public class RecurringAppointmentsController {
                     new ArrayList<>(appointmentRecurringPattern.getAppointments())), HttpStatus.OK);
         } catch (RuntimeException e) {
             log.error("Runtime error while trying to create recurring appointments", e);
+            return new ResponseEntity<>(RestUtil.wrapErrorResponse(e, e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @RequestMapping(method = RequestMethod.POST, value = "/conflicts")
+    @ResponseBody
+    public ResponseEntity<Object> conflicts(@RequestBody RecurringAppointmentRequest recurringAppointmentRequest) {
+        try {
+            RecurringPattern recurringPattern = recurringAppointmentRequest.getRecurringPattern();
+            recurringPatternValidator.isValidRecurringPattern(recurringPattern);
+            List<AppointmentConflict> conflictsList = recurringAppointmentsService.generateAppointmentsConflict(recurringAppointmentRequest);
+            return new ResponseEntity<>(conflictsList, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            log.error("Runtime error while trying to get conflicts for recurring appointments", e);
             return new ResponseEntity<>(RestUtil.wrapErrorResponse(e, e.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }

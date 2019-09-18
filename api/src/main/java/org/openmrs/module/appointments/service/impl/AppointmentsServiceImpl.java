@@ -22,6 +22,7 @@ import org.openmrs.module.appointments.validator.AppointmentValidator;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -249,5 +250,12 @@ public class AppointmentsServiceImpl implements AppointmentsService {
         }
         Set<AppointmentAudit> appointmentAudits = appointment.getAppointmentAudits();
         appointmentAudits.addAll(new HashSet<>(Collections.singleton(appointmentAudit)));
+    }
+
+    @Override
+    public List<Appointment> getAppointmentsForPatient(Integer appointmentId, Integer patientId) {
+        List<Appointment> appointments = new ArrayList<>();
+        appointmentDao.getAppointmentsForPatient(appointmentId, patientId);
+        return appointments;
     }
 }

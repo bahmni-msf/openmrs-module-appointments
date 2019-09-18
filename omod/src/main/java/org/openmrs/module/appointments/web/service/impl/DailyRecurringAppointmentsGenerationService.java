@@ -26,14 +26,14 @@ public class DailyRecurringAppointmentsGenerationService extends AbstractRecurri
     private RecurringAppointmentRequest recurringAppointmentRequest;
 
     @Override
-    public List<Appointment> generateAppointments(RecurringAppointmentRequest recurringAppointmentRequest) {
+    public List<Pair<Date, Date>> generateAppointmentDates(RecurringAppointmentRequest recurringAppointmentRequest) {
         this.recurringAppointmentRequest = recurringAppointmentRequest;
         RecurringPattern recurringPattern = recurringAppointmentRequest.getRecurringPattern();
         Date endDate = getEndDate(recurringPattern.getPeriod(), recurringPattern.getFrequency(), recurringPattern.getEndDate());
         List<Pair<Date, Date>> appointmentDates = getAppointmentDates(endDate,
                 DateUtil.getCalendar(recurringAppointmentRequest.getAppointmentRequest().getStartDateTime()),
                 DateUtil.getCalendar(recurringAppointmentRequest.getAppointmentRequest().getEndDateTime()));
-        return createAppointments( appointmentDates, recurringAppointmentRequest.getAppointmentRequest());
+        return appointmentDates;
     }
 
     public Date getEndDate(int period, Integer frequency, Date endDate) {
