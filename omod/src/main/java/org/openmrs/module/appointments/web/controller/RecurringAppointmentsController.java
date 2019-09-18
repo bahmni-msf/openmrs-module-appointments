@@ -160,4 +160,22 @@ public class RecurringAppointmentsController {
         }
         return recurringAppointmentMapper.constructResponse(appointment);
     }
+
+    @RequestMapping(method = RequestMethod.POST, value = "/conflicts")
+    @ResponseBody
+    public ResponseEntity<Object> conflicts(@RequestBody RecurringAppointmentRequest recurringAppointmentRequest) {
+        try {
+            RecurringPattern recurringPattern = recurringAppointmentRequest.getRecurringPattern();
+            Errors errors = new BeanPropertyBindingResult(recurringPattern, "recurringPattern");
+            recurringPatternValidator.validate(recurringPattern, errors);
+            if (!errors.getAllErrors().isEmpty()) {
+                throw new APIException(errors.getAllErrors().get(0).getCodes()[1]);
+            }
+            return new ResponseEntity<>(recurringAppointmentMapper.constructConflictResponse(Collections.emptyList()),
+                    HttpStatus.OK);
+        } catch (RuntimeException e) {
+            log.error("Runtime error while trying to get conflicts for recurring appointments", e);
+            return new ResponseEntity<>(RestUtil.wrapErrorResponse(e, e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+    }
 }

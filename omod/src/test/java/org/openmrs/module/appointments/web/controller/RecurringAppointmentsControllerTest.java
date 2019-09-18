@@ -287,4 +287,25 @@ public class RecurringAppointmentsControllerTest {
         assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
         assertEquals(((Map)((Map)responseEntity.getBody()).get("error")).get("message"), "Appointment does not exist");
     }
+
+    @Test
+    public void shouldThrowAPIExceptionWhenRequestIsInvalidForConflicts() {
+        RecurringAppointmentRequest recurringAppointmentRequest = new RecurringAppointmentRequest();
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) {
+                Object[] args = invocationOnMock.getArguments();
+                Errors errors = (Errors) args[1];
+                errors.reject("some error");
+                return null;
+            }
+        }).when(recurringPatternValidator).validate(any(), any());
+
+        recurringAppointmentsController.conflicts(recurringAppointmentRequest);
+
+        ResponseEntity<Object> responseEntity = recurringAppointmentsController.save(recurringAppointmentRequest);
+        verify(recurringAppointmentMapper, never()).constructConflictResponse(Collections.emptyList());
+        assertEquals(responseEntity.getStatusCode(), HttpStatus.BAD_REQUEST);
+        assertEquals(((Map) ((Map) responseEntity.getBody()).get("error")).get("message"), "some error");
+    }
 }
