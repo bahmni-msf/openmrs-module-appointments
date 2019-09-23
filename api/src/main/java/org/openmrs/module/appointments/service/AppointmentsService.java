@@ -5,6 +5,7 @@ import org.openmrs.annotation.Authorized;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentProvider;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
+import org.openmrs.module.appointments.model.AppointmentSearchRequest;
 import org.openmrs.module.appointments.model.AppointmentServiceType;
 import org.openmrs.module.appointments.model.AppointmentStatus;
 import org.openmrs.module.appointments.validator.AppointmentValidator;
@@ -70,5 +71,9 @@ public interface AppointmentsService {
     @Transactional
     @Authorized({MANAGE_APPOINTMENTS, MANAGE_OWN_APPOINTMENTS})
     void validate(Appointment appointment, List<AppointmentValidator> appointmentValidators);
+
+    @Transactional
+    @Authorized({VIEW_APPOINTMENTS})
+    List<Appointment> search(AppointmentSearchRequest appointmentSearchRequest);
 }
 
