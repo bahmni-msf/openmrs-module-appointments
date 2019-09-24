@@ -1,5 +1,6 @@
 package org.openmrs.module.appointments.service.impl;
 
+import org.openmrs.module.appointments.conflicts.AppointmentConflictType;
 import org.openmrs.module.appointments.dao.AppointmentDao;
 import org.openmrs.module.appointments.dao.AppointmentRecurringPatternDao;
 import org.openmrs.module.appointments.helper.AppointmentServiceHelper;
@@ -42,6 +43,8 @@ public class AppointmentRecurringPatternServiceImpl implements AppointmentRecurr
 
     private AppointmentDao appointmentDao;
 
+    private List<AppointmentConflictType> appointmentConflictTypes;
+
     public void setAppointmentRecurringPatternDao(AppointmentRecurringPatternDao appointmentRecurringPatternDao) {
         this.appointmentRecurringPatternDao = appointmentRecurringPatternDao;
     }
@@ -64,6 +67,10 @@ public class AppointmentRecurringPatternServiceImpl implements AppointmentRecurr
 
     public void setEditAppointmentValidators(List<AppointmentValidator> editAppointmentValidators) {
         this.editAppointmentValidators = editAppointmentValidators;
+    }
+
+    public void setAppointmentConflictTypes(List<AppointmentConflictType> appointmentConflictTypes) {
+        this.appointmentConflictTypes = appointmentConflictTypes;
     }
 
     @Override

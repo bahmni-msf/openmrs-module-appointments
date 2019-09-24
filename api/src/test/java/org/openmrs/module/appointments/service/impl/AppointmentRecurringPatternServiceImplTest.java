@@ -12,6 +12,7 @@ import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.Patient;
 import org.openmrs.api.APIException;
+import org.openmrs.module.appointments.conflicts.AppointmentConflictType;
 import org.openmrs.module.appointments.dao.AppointmentDao;
 import org.openmrs.module.appointments.dao.AppointmentRecurringPatternDao;
 import org.openmrs.module.appointments.helper.AppointmentServiceHelper;
@@ -63,6 +64,9 @@ public class AppointmentRecurringPatternServiceImplTest {
 
     @Spy
     private List<AppointmentValidator> appointmentValidators = new ArrayList<>();
+
+    @Spy
+    private List<AppointmentConflictType> appointmentConflictTypes = new ArrayList<>();
 
     @Spy
     private List<AppointmentValidator> editAppointmentValidators = new ArrayList<>();
