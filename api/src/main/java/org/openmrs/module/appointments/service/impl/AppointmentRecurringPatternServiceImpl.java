@@ -126,7 +126,7 @@ public class AppointmentRecurringPatternServiceImpl implements AppointmentRecurr
 
     @Override
     public List<AppointmentConflict> getAllAppointmentsConflicts(List<Appointment> appointments) {
-        return null;
+        return appointmentServiceHelper.getConflictsForMultipleAppointments(appointments, appointmentConflictTypes);
     }
 
     private void updateAppointmentsDetails(AppointmentRecurringPattern appointmentRecurringPattern, List<Appointment> appointments)  {

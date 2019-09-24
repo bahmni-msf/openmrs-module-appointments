@@ -18,6 +18,7 @@ import org.openmrs.module.appointments.dao.AppointmentRecurringPatternDao;
 import org.openmrs.module.appointments.helper.AppointmentServiceHelper;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentAudit;
+import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentKind;
 import org.openmrs.module.appointments.model.AppointmentRecurringPattern;
 import org.openmrs.module.appointments.model.AppointmentStatus;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.openmrs.module.appointments.model.AppointmentStatus.CheckedIn;
@@ -296,6 +298,18 @@ public class AppointmentRecurringPatternServiceImplTest {
         verify(appointmentServiceHelper, never()).checkAndAssignAppointmentNumber(any());
     }
 
+    @Test
+    public void shouldCallServiceHelperOnGetAllConflicts() {
+        List<Appointment> appointments = mock(List.class);
+        List<AppointmentConflict> conflicts = mock(List.class);
+
+        doReturn(conflicts).when(appointmentServiceHelper).getConflictsForMultipleAppointments(appointments, appointmentConflictTypes);
+        List<AppointmentConflict> appointmentsConflicts = recurringAppointmentService.getAllAppointmentsConflicts(appointments);
+
+        verify(appointmentServiceHelper).getConflictsForMultipleAppointments(appointments, appointmentConflictTypes);
+        assertNotNull(appointmentsConflicts);
+
+    }
 
     private Appointment getAppointment(String uuid, Patient patient, AppointmentStatus appointmentStatus,
                                        AppointmentKind appointmentKind, Date start, Date end) {

@@ -9,8 +9,11 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.Patient;
 import org.openmrs.api.APIException;
+import org.openmrs.module.appointments.conflicts.AppointmentConflictType;
+import org.openmrs.module.appointments.conflicts.impl.AppointmentServiceUnavailabilityConflict;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentAudit;
+import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentKind;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
 import org.openmrs.module.appointments.model.AppointmentServiceType;
@@ -22,6 +25,7 @@ import org.openmrs.module.appointments.validator.AppointmentValidator;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -30,9 +34,11 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AppointmentServiceHelperTest {
@@ -171,4 +177,48 @@ public class AppointmentServiceHelperTest {
                 any(AppointmentStatus.class),
                 anyListOf(String.class));
     }
+
+    @Test
+    public void shouldReturnConflictsForMultipleAppointments() {
+        Appointment appointmentOne = new Appointment();
+        appointmentOne.setAppointmentId(2);
+        Appointment appointmentTwo = new Appointment();
+        appointmentTwo.setAppointmentId(3);
+        Appointment appointmentThree = new Appointment();
+        appointmentThree.setAppointmentId(4);
+        AppointmentConflictType appointmentConflictType = mock(AppointmentServiceUnavailabilityConflict.class);
+        List<Appointment> appointments = Arrays.asList(appointmentOne, appointmentTwo, appointmentThree);
+        List<AppointmentConflictType> conflictTypes = Collections.singletonList(appointmentConflictType);
+        AppointmentConflict conflictOne = mock(AppointmentConflict.class);
+        when(appointmentConflictType.getAppointmentConflicts(any())).thenReturn(conflictOne);
+
+        List<AppointmentConflict> conflicts = appointmentServiceHelper.getConflictsForMultipleAppointments(appointments, conflictTypes);
+
+        verify(appointmentConflictType).getAppointmentConflicts(appointmentOne);
+        verify(appointmentConflictType).getAppointmentConflicts(appointmentTwo);
+        verify(appointmentConflictType).getAppointmentConflicts(appointmentThree);
+        assertEquals(3,conflicts.size());
+    }
+
+    @Test
+    public void shouldNotReturnConflictWhenItsNull() {
+        Appointment appointmentOne = mock(Appointment.class);
+        Appointment appointmentTwo = mock(Appointment.class);
+        Appointment appointmentThree = mock(Appointment.class);
+        AppointmentConflictType appointmentConflictType = mock(AppointmentServiceUnavailabilityConflict.class);
+        List<Appointment> appointments = Arrays.asList(appointmentOne, appointmentTwo, appointmentThree);
+        List<AppointmentConflictType> conflictTypes = Collections.singletonList(appointmentConflictType);
+        AppointmentConflict conflictOne = mock(AppointmentConflict.class);
+        when(appointmentConflictType.getAppointmentConflicts(appointmentOne)).thenReturn(conflictOne);
+        when(appointmentConflictType.getAppointmentConflicts(appointmentTwo)).thenReturn(conflictOne);
+        when(appointmentConflictType.getAppointmentConflicts(appointmentThree)).thenReturn(null);
+
+        List<AppointmentConflict> conflicts = appointmentServiceHelper.getConflictsForMultipleAppointments(appointments, conflictTypes);
+
+        verify(appointmentConflictType).getAppointmentConflicts(appointmentOne);
+        verify(appointmentConflictType).getAppointmentConflicts(appointmentTwo);
+        verify(appointmentConflictType).getAppointmentConflicts(appointmentThree);
+        assertEquals(2,conflicts.size());
+    }
+
 }

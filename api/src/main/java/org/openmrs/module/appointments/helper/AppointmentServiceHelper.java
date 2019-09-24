@@ -4,8 +4,10 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.api.APIException;
+import org.openmrs.module.appointments.conflicts.AppointmentConflictType;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentAudit;
+import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentStatus;
 import org.openmrs.module.appointments.validator.AppointmentStatusChangeValidator;
 import org.openmrs.module.appointments.validator.AppointmentValidator;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 public class AppointmentServiceHelper {
@@ -96,5 +99,29 @@ public class AppointmentServiceHelper {
             String message = StringUtils.join(errors, "\n");
             throw new APIException(message);
         }
+    }
+
+    public List<AppointmentConflict> getConflictsForMultipleAppointments(
+            List<Appointment> appointments, List<AppointmentConflictType> appointmentConflictTypes) {
+        List<AppointmentConflict> allConflicts = new ArrayList<>();
+        for (Appointment appointment : appointments) {
+            List<AppointmentConflict> appointmentConflicts = getConflictsForSingleAppointment(appointment, appointmentConflictTypes);
+            if (CollectionUtils.isNotEmpty(appointmentConflicts))
+                allConflicts.addAll(appointmentConflicts);
+        }
+        return allConflicts;
+    }
+
+    private List<AppointmentConflict> getConflictsForSingleAppointment(
+            Appointment appointment, List<AppointmentConflictType> appointmentConflictTypes) {
+        List<AppointmentConflict> appointmentConflicts = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(appointmentConflictTypes)) {
+            for (AppointmentConflictType appointmentConflictType : appointmentConflictTypes) {
+                AppointmentConflict conflict = appointmentConflictType.getAppointmentConflicts(appointment);
+                if (Objects.nonNull(conflict))
+                    appointmentConflicts.add(conflict);
+            }
+        }
+        return appointmentConflicts;
     }
 }
