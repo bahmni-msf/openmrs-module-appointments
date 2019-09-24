@@ -1,10 +1,8 @@
 package org.openmrs.module.appointments.web.contract;
 
-import org.openmrs.module.appointments.model.Appointment;
-
 public class AppointmentConflictResponse {
     private String type;
-    private Appointment appointment;
+    private AppointmentDefaultResponse appointmentDefaultResponse;
 
     public String getType() {
         return type;
@@ -14,11 +12,11 @@ public class AppointmentConflictResponse {
         this.type = type;
     }
 
-    public Appointment getAppointment() {
-        return appointment;
+    public AppointmentDefaultResponse getAppointmentDefaultResponse() {
+        return appointmentDefaultResponse;
     }
 
-    public void setAppointment(Appointment appointment) {
-        this.appointment = appointment;
+    public void setAppointmentDefaultResponse(AppointmentDefaultResponse appointmentDefaultResponse) {
+        this.appointmentDefaultResponse = appointmentDefaultResponse;
     }
 }

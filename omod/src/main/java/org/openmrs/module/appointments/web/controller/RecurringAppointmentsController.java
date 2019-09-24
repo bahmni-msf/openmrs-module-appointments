@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.APIException;
 import org.openmrs.module.appointments.model.Appointment;
+import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentRecurringPattern;
 import org.openmrs.module.appointments.service.AppointmentRecurringPatternService;
 import org.openmrs.module.appointments.service.AppointmentsService;
@@ -171,7 +172,9 @@ public class RecurringAppointmentsController {
             if (!errors.getAllErrors().isEmpty()) {
                 throw new APIException(errors.getAllErrors().get(0).getCodes()[1]);
             }
-            return new ResponseEntity<>(recurringAppointmentMapper.constructConflictResponse(Collections.emptyList()),
+            List<Appointment> appointments = recurringAppointmentsService.generateRecurringAppointments(recurringAppointmentRequest);
+            List<AppointmentConflict> appointmentConflicts = appointmentRecurringPatternService.getAllAppointmentsConflicts(appointments);
+            return new ResponseEntity<>(recurringAppointmentMapper.constructConflictResponse(appointmentConflicts),
                     HttpStatus.OK);
         } catch (RuntimeException e) {
             log.error("Runtime error while trying to get conflicts for recurring appointments", e);

@@ -5,6 +5,7 @@ import org.openmrs.module.appointments.dao.AppointmentRecurringPatternDao;
 import org.openmrs.module.appointments.helper.AppointmentServiceHelper;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentAudit;
+import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentRecurringPattern;
 import org.openmrs.module.appointments.model.AppointmentStatus;
 import org.openmrs.module.appointments.service.AppointmentRecurringPatternService;
@@ -83,14 +84,6 @@ public class AppointmentRecurringPatternServiceImpl implements AppointmentRecurr
         return appointmentRecurringPattern;
     }
 
-    private void updateAppointmentsDetails(AppointmentRecurringPattern appointmentRecurringPattern, List<Appointment> appointments)  {
-        appointments.forEach(appointment -> {
-            appointmentServiceHelper.checkAndAssignAppointmentNumber(appointment);
-            setAppointmentAudit(appointment);
-            appointment.setAppointmentRecurringPattern(appointmentRecurringPattern);
-        });
-    }
-
     @Override
     public Appointment update(AppointmentRecurringPattern appointmentRecurringPattern,
                               List<Appointment> updatedAppointments) {
@@ -124,7 +117,18 @@ public class AppointmentRecurringPatternServiceImpl implements AppointmentRecurr
         return pendingAppointments;
     }
 
+    @Override
+    public List<AppointmentConflict> getAllAppointmentsConflicts(List<Appointment> appointments) {
+        return null;
+    }
 
+    private void updateAppointmentsDetails(AppointmentRecurringPattern appointmentRecurringPattern, List<Appointment> appointments)  {
+        appointments.forEach(appointment -> {
+            appointmentServiceHelper.checkAndAssignAppointmentNumber(appointment);
+            setAppointmentAudit(appointment);
+            appointment.setAppointmentRecurringPattern(appointmentRecurringPattern);
+        });
+    }
 
     private List<Appointment> getPendingOccurrences(String appointmentUuid, List<AppointmentStatus> applicableStatusList) {
         Date startOfDay = getStartOfDay();

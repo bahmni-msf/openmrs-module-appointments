@@ -1,6 +1,7 @@
 package org.openmrs.module.appointments.service;
 
 import org.openmrs.module.appointments.model.Appointment;
+import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentRecurringPattern;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,4 +20,7 @@ public interface AppointmentRecurringPatternService {
 
     @Transactional
     AppointmentRecurringPattern update(AppointmentRecurringPattern appointmentRecurringPattern, Appointment editedAppointment);
+
+    @Transactional
+    List<AppointmentConflict> getAllAppointmentsConflicts(List<Appointment> appointments);
 }
