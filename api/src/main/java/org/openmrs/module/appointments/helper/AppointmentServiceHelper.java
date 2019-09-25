@@ -112,7 +112,7 @@ public class AppointmentServiceHelper {
         return allConflicts;
     }
 
-    private List<AppointmentConflict> getConflictsForSingleAppointment(
+    public List<AppointmentConflict> getConflictsForSingleAppointment(
             Appointment appointment, List<AppointmentConflictType> appointmentConflictTypes) {
         List<AppointmentConflict> appointmentConflicts = new ArrayList<>();
         if (!CollectionUtils.isEmpty(appointmentConflictTypes)) {

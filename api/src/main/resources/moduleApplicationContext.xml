@@ -90,6 +90,11 @@
                         <bean class="org.openmrs.module.appointments.helper.AppointmentServiceHelper"/>
                     </list>
                 </property>
+                <property name="appointmentConflictTypes">
+                    <list>
+                        <bean class="org.openmrs.module.appointments.conflicts.impl.AppointmentServiceUnavailabilityConflict"/>
+                    </list>
+                </property>
             </bean>
         </property>
         <property name="preInterceptors">
