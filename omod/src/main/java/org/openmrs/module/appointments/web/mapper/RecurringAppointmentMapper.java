@@ -1,5 +1,6 @@
 package org.openmrs.module.appointments.web.mapper;
 
+import org.openmrs.module.appointments.conflicts.AppointmentConflictType;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.web.contract.AppointmentConflictResponse;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -37,12 +39,8 @@ public class RecurringAppointmentMapper {
         return recurringAppointmentDefaultResponse;
     }
 
-    public List<AppointmentConflictResponse> constructConflictResponse(List<AppointmentConflict> conflictList) {
-        return conflictList.stream().map(conflict -> {
-            AppointmentConflictResponse response = new AppointmentConflictResponse();
-            response.setType(conflict.getType());
-            response.setAppointmentDefaultResponse(appointmentMapper.constructResponse(conflict.getAppointment()));
-            return response;
-        }).collect(Collectors.toList());
+    public Map<String, List<AppointmentDefaultResponse>> constructConflictResponse(List<AppointmentConflict> conflictList) {
+        return conflictList.stream().collect(Collectors.groupingBy(AppointmentConflict::getType,
+                Collectors.mapping(a -> appointmentMapper.constructResponse(a.getAppointment()), Collectors.toList())));
     }
 }
