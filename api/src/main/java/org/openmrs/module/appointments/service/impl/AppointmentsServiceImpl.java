@@ -17,6 +17,7 @@ import org.openmrs.module.appointments.model.AppointmentSearchRequest;
 import org.openmrs.module.appointments.model.AppointmentServiceType;
 import org.openmrs.module.appointments.model.AppointmentStatus;
 import org.openmrs.module.appointments.helper.AppointmentServiceHelper;
+import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentProvider;
 import org.openmrs.module.appointments.model.AppointmentProviderResponse;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
@@ -111,6 +112,11 @@ public class AppointmentsServiceImpl implements AppointmentsService {
                     new Object[] { MANAGE_APPOINTMENTS }, null));
         }
         appointmentServiceHelper.validate(appointment, appointmentValidators);
+    }
+
+    @Override
+    public List<AppointmentConflict> getAppointmentConflicts(Appointment appointment) {
+        return null;
     }
 
     @Override

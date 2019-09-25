@@ -1,5 +1,6 @@
 package org.openmrs.module.appointments.web.controller;
 
+import org.apache.lucene.search.Collector;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -254,5 +255,19 @@ public class AppointmentControllerTest {
         appointmentController.saveAppointment(appointmentRequest);
         Mockito.verify(appointmentMapper, times(1)).fromRequest(appointmentRequest);
         Mockito.verify(appointmentsService, times(1)).validateAndSave(appointment);
+    }
+
+    @Test
+    public void shouldReturnConflictResponseForAnAppointmentHavingNoConflicts() {
+        AppointmentRequest appointmentRequest = mock(AppointmentRequest.class);
+        Appointment appointment = mock(Appointment.class);
+
+        when(appointmentMapper.fromRequest(appointmentRequest)).thenReturn(appointment);
+        when(appointmentsService.getAppointmentConflicts(appointment)).thenReturn(mock(List.class));
+
+        appointmentController.conflicts(appointmentRequest);
+
+        verify(appointmentMapper).fromRequest(appointmentRequest);
+        verify(appointmentsService).getAppointmentConflicts(appointment);
     }
 }

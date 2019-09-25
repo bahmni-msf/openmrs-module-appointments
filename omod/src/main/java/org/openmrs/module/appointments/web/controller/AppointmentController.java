@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.APIException;
 import org.openmrs.module.appointments.model.Appointment;
+import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentProvider;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
 import org.openmrs.module.appointments.model.AppointmentServiceType;
@@ -183,5 +184,19 @@ public class AppointmentController {
             return new ResponseEntity<>(RestUtil.wrapErrorResponse(e, e.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
+
+    @RequestMapping(method = RequestMethod.POST, value = "/conflicts")
+    @ResponseBody
+    public ResponseEntity<Object> conflicts(@RequestBody AppointmentRequest appointmentRequest) {
+        try {
+            Appointment appointment = appointmentMapper.fromRequest(appointmentRequest);
+            List<AppointmentConflict> conflicts = appointmentsService.getAppointmentConflicts(appointment);
+            return new ResponseEntity<>(appointmentMapper.constructConflictResponse(conflicts), HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Runtime error while trying to create new appointment", e);
+            return new ResponseEntity<>(RestUtil.wrapErrorResponse(e, e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+    }
+
 
 }
