@@ -18,6 +18,7 @@ import org.openmrs.module.appointments.web.contract.AppointmentRequest;
 import org.openmrs.module.appointments.web.contract.RecurringAppointmentDefaultResponse;
 import org.openmrs.module.appointments.web.contract.RecurringAppointmentRequest;
 import org.openmrs.module.appointments.web.contract.RecurringPattern;
+import org.openmrs.module.appointments.web.mapper.AppointmentMapper;
 import org.openmrs.module.appointments.web.mapper.RecurringAppointmentMapper;
 import org.openmrs.module.appointments.web.mapper.RecurringPatternMapper;
 import org.openmrs.module.appointments.web.service.impl.AllAppointmentRecurringPatternUpdateService;
@@ -67,6 +68,9 @@ public class RecurringAppointmentsControllerTest {
 
     @Mock
     private RecurringAppointmentMapper recurringAppointmentMapper;
+
+    @Mock
+    private AppointmentMapper appointmentMapper;
 
     @Mock
     private SingleAppointmentRecurringPatternUpdateService singleAppointmentRecurringPatternUpdateService;
@@ -305,7 +309,7 @@ public class RecurringAppointmentsControllerTest {
 
 
         ResponseEntity<Object> responseEntity = recurringAppointmentsController.conflicts(recurringAppointmentRequest);
-        verify(recurringAppointmentMapper, never()).constructConflictResponse(Collections.emptyList());
+        verify(appointmentMapper, never()).constructConflictResponse(Collections.emptyList());
         verify(appointmentRecurringPatternService, never()).getAllAppointmentsConflicts(any());
         verify(recurringAppointmentsService, never()).generateRecurringAppointments(any());
         assertEquals(responseEntity.getStatusCode(), HttpStatus.BAD_REQUEST);
@@ -323,7 +327,7 @@ public class RecurringAppointmentsControllerTest {
         ResponseEntity<Object> responseEntity = recurringAppointmentsController.conflicts(recurringAppointmentRequest);
         verify(recurringAppointmentsService).generateRecurringAppointments(recurringAppointmentRequest);
         verify(appointmentRecurringPatternService).getAllAppointmentsConflicts(appointments);
-        verify(recurringAppointmentMapper).constructConflictResponse(conflicts);
+        verify(appointmentMapper).constructConflictResponse(conflicts);
         assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
         assertNotNull(responseEntity.getBody());
     }

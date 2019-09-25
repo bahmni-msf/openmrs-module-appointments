@@ -260,9 +260,8 @@ public class AppointmentMapper {
         return appointmentProvider;
     }
 
-    public Map<String, AppointmentDefaultResponse> constructConflictResponse(List<AppointmentConflict> conflicts) {
-        Map<String, AppointmentDefaultResponse> response = new HashMap<>();
-        conflicts.forEach(conflict -> response.put(conflict.getType(), constructResponse(conflict.getAppointment())));
-        return response;
+    public Map<String, List<AppointmentDefaultResponse>> constructConflictResponse(List<AppointmentConflict> conflictList) {
+        return conflictList.stream().collect(Collectors.groupingBy(AppointmentConflict::getType,
+                Collectors.mapping(conflict -> constructResponse(conflict.getAppointment()), Collectors.toList())));
     }
 }

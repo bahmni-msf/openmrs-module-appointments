@@ -158,28 +158,4 @@ public class RecurringAppointmentMapperTest {
         verify(recurringPatternMapper).mapToResponse(any(AppointmentRecurringPattern.class));
     }
 
-    @Test
-    public void shouldReturnResponseEntityMapForListOfConflicts() {
-        AppointmentConflict conflictOne = new AppointmentConflict();
-        conflictOne.setType(SERVICE_UNAVAILABLE.name());
-        conflictOne.setAppointment(mock(Appointment.class));
-        AppointmentConflict conflictTwo = new AppointmentConflict();
-        conflictTwo.setType(SERVICE_UNAVAILABLE.name());
-        conflictTwo.setAppointment(mock(Appointment.class));
-        List<AppointmentConflict> conflicts = Arrays.asList(conflictOne,conflictTwo);
-
-        Map<String, List<AppointmentDefaultResponse>> responseMap = recurringAppointmentMapper.constructConflictResponse(conflicts);
-
-        assertNotNull(responseMap);
-        assertEquals(1,responseMap.size());
-        assertEquals(2,responseMap.get(SERVICE_UNAVAILABLE.name()).size());
-    }
-
-    @Test
-    public void shouldReturnEmptyMapForEmptyListOfConflicts() {
-        Map<String, List<AppointmentDefaultResponse>> responseMap = recurringAppointmentMapper.constructConflictResponse(Collections.emptyList());
-
-        assertNotNull(responseMap);
-        assertEquals(0,responseMap.size());
-    }
 }

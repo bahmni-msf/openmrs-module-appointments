@@ -4,6 +4,7 @@ import org.codehaus.jackson.type.TypeReference;
 import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.appointments.constants.AppointmentConflictTypeEnum;
 import org.openmrs.module.appointments.dao.AppointmentAuditDao;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentAudit;
@@ -213,5 +214,55 @@ public class AppointmentControllerIT extends BaseIntegrationTest {
         MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment", content));
         assertNotNull(response);
         assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void shouldReturnDayConflictsForAnAppointment() throws Exception {
+        String content = "{\"patientUuid\": \"2c33920f-7aa6-48d6-998a-60412d8ff7d5\"," +
+                "\"serviceUuid\": \"c36006e5-9fbb-4f20-866b-0ece245615a6\"," +
+                "\"serviceTypeUuid\": \"678906e5-9fbb-4f20-866b-0ece24564578\"," +
+                "\"startDateTime\": \"2019-09-24T11:30:00\"," +
+                "\"endDateTime\": \"2019-09-24T12:00:00\"," +
+                "\"providers\": [{" +
+                "\"uuid\": \"2bdc3f7d-d911-401a-84e9-5494dda83e8e\"," +
+                "\"response\": \"ACCEPTED\"," +
+                "\"comments\": null" +
+                "}]," +
+                "\"locationUuid\": \"c36006e5-9fbb-4f20-866b-0ece245615a1\"," +
+                "\"appointmentKind\": \"Scheduled\"" +
+                "}";
+        MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment/conflicts", content));
+        assertNotNull(response);
+        assertEquals(200, response.getStatus());
+        Map<String, List<AppointmentDefaultResponse>> appointmentDefaultResponse = deserialize(response, new TypeReference<Map<String, List<AppointmentDefaultResponse>>>() {
+        });
+        assertEquals(1, appointmentDefaultResponse.get(AppointmentConflictTypeEnum.SERVICE_UNAVAILABLE.name()).size());
+        assertEquals("c36006e5-9fbb-4f20-866b-0ece245615a6", appointmentDefaultResponse.get(AppointmentConflictTypeEnum.SERVICE_UNAVAILABLE.name()).get(0)
+                .getService().getUuid());
+    }
+
+    @Test
+    public void shouldReturnTimeSlotConflictsForAnAppointment() throws Exception {
+        String content = "{\"patientUuid\": \"2c33920f-7aa6-48d6-998a-60412d8ff7d5\"," +
+                "\"serviceUuid\": \"c36006e5-9fbb-4f20-866b-0ece245615a6\"," +
+                "\"serviceTypeUuid\": \"678906e5-9fbb-4f20-866b-0ece24564578\"," +
+                "\"startDateTime\": \"2019-09-23T13:30:00\"," +
+                "\"endDateTime\": \"2019-09-23T14:00:00\"," +
+                "\"providers\": [{" +
+                "\"uuid\": \"2bdc3f7d-d911-401a-84e9-5494dda83e8e\"," +
+                "\"response\": \"ACCEPTED\"," +
+                "\"comments\": null" +
+                "}]," +
+                "\"locationUuid\": \"c36006e5-9fbb-4f20-866b-0ece245615a1\"," +
+                "\"appointmentKind\": \"Scheduled\"" +
+                "}";
+        MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment/conflicts", content));
+        assertNotNull(response);
+        assertEquals(200, response.getStatus());
+        Map<String, List<AppointmentDefaultResponse>> appointmentDefaultResponse = deserialize(response, new TypeReference<Map<String, List<AppointmentDefaultResponse>>>() {
+        });
+        assertEquals(1, appointmentDefaultResponse.get(AppointmentConflictTypeEnum.SERVICE_UNAVAILABLE.name()).size());
+        assertEquals("c36006e5-9fbb-4f20-866b-0ece245615a6", appointmentDefaultResponse.get(AppointmentConflictTypeEnum.SERVICE_UNAVAILABLE.name()).get(0)
+                .getService().getUuid());
     }
 }

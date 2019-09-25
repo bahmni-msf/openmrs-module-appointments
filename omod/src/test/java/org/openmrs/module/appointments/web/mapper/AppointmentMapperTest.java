@@ -26,6 +26,7 @@ import java.util.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
+import static org.openmrs.module.appointments.constants.AppointmentConflictTypeEnum.SERVICE_UNAVAILABLE;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
@@ -620,5 +621,39 @@ public class AppointmentMapperTest {
         AppointmentDefaultResponse appointmentDefaultResponse = appointmentMapper.constructResponse(appointment);
 
         assertFalse(appointmentDefaultResponse.getRecurring());
+    }
+
+    @Test
+    public void shouldReturnResponseEntityMapForListOfConflicts() {
+        Appointment appOne = new Appointment();
+        appOne.setUuid("1");
+        appOne.setPatient(patient);
+        appOne.setAppointmentKind(AppointmentKind.Scheduled);
+        Appointment appTwo = new Appointment();
+        appTwo.setUuid("2");
+        appTwo.setPatient(patient);
+        appTwo.setAppointmentKind(AppointmentKind.Scheduled);
+
+        AppointmentConflict conflictOne = new AppointmentConflict();
+        conflictOne.setType(SERVICE_UNAVAILABLE.name());
+        conflictOne.setAppointment(appOne);
+        AppointmentConflict conflictTwo = new AppointmentConflict();
+        conflictTwo.setType(SERVICE_UNAVAILABLE.name());
+        conflictTwo.setAppointment(appTwo);
+        List<AppointmentConflict> conflicts = Arrays.asList(conflictOne,conflictTwo);
+
+        Map<String, List<AppointmentDefaultResponse>> responseMap = appointmentMapper.constructConflictResponse(conflicts);
+
+        assertNotNull(responseMap);
+        assertEquals(1,responseMap.size());
+        assertEquals(2,responseMap.get(SERVICE_UNAVAILABLE.name()).size());
+    }
+
+    @Test
+    public void shouldReturnEmptyMapForEmptyListOfConflicts() {
+        Map<String, List<AppointmentDefaultResponse>> responseMap = appointmentMapper.constructConflictResponse(Collections.emptyList());
+
+        assertNotNull(responseMap);
+        assertEquals(0,responseMap.size());
     }
 }

@@ -39,8 +39,4 @@ public class RecurringAppointmentMapper {
         return recurringAppointmentDefaultResponse;
     }
 
-    public Map<String, List<AppointmentDefaultResponse>> constructConflictResponse(List<AppointmentConflict> conflictList) {
-        return conflictList.stream().collect(Collectors.groupingBy(AppointmentConflict::getType,
-                Collectors.mapping(a -> appointmentMapper.constructResponse(a.getAppointment()), Collectors.toList())));
-    }
 }

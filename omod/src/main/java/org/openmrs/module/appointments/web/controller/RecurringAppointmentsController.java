@@ -11,6 +11,7 @@ import org.openmrs.module.appointments.service.AppointmentsService;
 import org.openmrs.module.appointments.web.contract.RecurringAppointmentDefaultResponse;
 import org.openmrs.module.appointments.web.contract.RecurringAppointmentRequest;
 import org.openmrs.module.appointments.web.contract.RecurringPattern;
+import org.openmrs.module.appointments.web.mapper.AppointmentMapper;
 import org.openmrs.module.appointments.web.mapper.RecurringAppointmentMapper;
 import org.openmrs.module.appointments.web.mapper.RecurringPatternMapper;
 import org.openmrs.module.appointments.web.service.impl.AllAppointmentRecurringPatternUpdateService;
@@ -53,6 +54,9 @@ public class RecurringAppointmentsController {
 
     @Autowired
     private RecurringAppointmentMapper recurringAppointmentMapper;
+
+    @Autowired
+    private AppointmentMapper appointmentMapper;
 
     @Autowired
     private RecurringPatternMapper recurringPatternMapper;
@@ -174,7 +178,9 @@ public class RecurringAppointmentsController {
             }
             List<Appointment> appointments = recurringAppointmentsService.generateRecurringAppointments(recurringAppointmentRequest);
             List<AppointmentConflict> appointmentConflicts = appointmentRecurringPatternService.getAllAppointmentsConflicts(appointments);
-            return new ResponseEntity<>(recurringAppointmentMapper.constructConflictResponse(appointmentConflicts),
+            if (appointmentConflicts.isEmpty())
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(appointmentMapper.constructConflictResponse(appointmentConflicts),
                     HttpStatus.OK);
         } catch (RuntimeException e) {
             log.error("Runtime error while trying to get conflicts for recurring appointments", e);

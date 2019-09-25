@@ -190,8 +190,10 @@ public class AppointmentController {
     public ResponseEntity<Object> conflicts(@RequestBody AppointmentRequest appointmentRequest) {
         try {
             Appointment appointment = appointmentMapper.fromRequest(appointmentRequest);
-            List<AppointmentConflict> conflicts = appointmentsService.getAppointmentConflicts(appointment);
-            return new ResponseEntity<>(appointmentMapper.constructConflictResponse(conflicts), HttpStatus.OK);
+            List<AppointmentConflict> appointmentConflicts = appointmentsService.getAppointmentConflicts(appointment);
+            if (appointmentConflicts.isEmpty())
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(appointmentMapper.constructConflictResponse(appointmentConflicts), HttpStatus.OK);
         } catch (Exception e) {
             log.error("Runtime error while trying to create new appointment", e);
             return new ResponseEntity<>(RestUtil.wrapErrorResponse(e, e.getMessage()), HttpStatus.BAD_REQUEST);
