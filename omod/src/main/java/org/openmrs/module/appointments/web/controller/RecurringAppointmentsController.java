@@ -176,7 +176,15 @@ public class RecurringAppointmentsController {
             if (!errors.getAllErrors().isEmpty()) {
                 throw new APIException(errors.getAllErrors().get(0).getCodes()[1]);
             }
-            List<Appointment> appointments = recurringAppointmentsService.generateRecurringAppointments(recurringAppointmentRequest);
+            List<Appointment> appointments;
+            if(Objects.isNull(recurringAppointmentRequest.getAppointmentRequest().getUuid()))
+                appointments = recurringAppointmentsService.generateRecurringAppointments(recurringAppointmentRequest);
+            else
+            {
+                AppointmentRecurringPattern appointmentRecurringPattern = allAppointmentRecurringPatternUpdateService
+                        .getUpdatedRecurringPattern(recurringAppointmentRequest);
+                appointments = new ArrayList<>(appointmentRecurringPattern.getAppointments());
+            }
             List<AppointmentConflict> appointmentConflicts = appointmentRecurringPatternService.getAllAppointmentsConflicts(appointments);
             if (appointmentConflicts.isEmpty())
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);

@@ -15,10 +15,12 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Component
 public class AppointmentServiceHelper {
@@ -103,13 +105,20 @@ public class AppointmentServiceHelper {
 
     public List<AppointmentConflict> getConflictsForMultipleAppointments(
             List<Appointment> appointments, List<AppointmentConflictType> appointmentConflictTypes) {
+        List<Appointment> filteredAppointments = getNonVoidedFutureAppointments(appointments);
         List<AppointmentConflict> allConflicts = new ArrayList<>();
-        for (Appointment appointment : appointments) {
+        for (Appointment appointment : filteredAppointments) {
             List<AppointmentConflict> appointmentConflicts = getConflictsForSingleAppointment(appointment, appointmentConflictTypes);
             if (CollectionUtils.isNotEmpty(appointmentConflicts))
                 allConflicts.addAll(appointmentConflicts);
         }
         return allConflicts;
+    }
+
+    private List<Appointment> getNonVoidedFutureAppointments(List<Appointment> appointments) {
+        return appointments.stream()
+                .filter(appointment -> !(appointment.getVoided() || appointment.getStartDateTime().before(new Date())))
+                .collect(Collectors.toList());
     }
 
     public List<AppointmentConflict> getConflictsForSingleAppointment(

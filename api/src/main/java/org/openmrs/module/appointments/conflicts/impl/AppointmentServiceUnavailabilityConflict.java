@@ -9,6 +9,7 @@ import org.openmrs.module.appointments.model.ServiceWeeklyAvailability;
 import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
@@ -29,24 +30,27 @@ public class AppointmentServiceUnavailabilityConflict implements AppointmentConf
     }
 
     private AppointmentConflict checkConflicts(Appointment appointment, AppointmentServiceDefinition appointmentServiceDefinition) {
-        Set<ServiceWeeklyAvailability> serviceAvailableDays = appointmentServiceDefinition.getWeeklyAvailability();
-        if (Objects.nonNull(serviceAvailableDays) && !serviceAvailableDays.isEmpty()) {
+        Set<ServiceWeeklyAvailability> weeklyAvailableDays = appointmentServiceDefinition.getWeeklyAvailability();
+        if (isObjectPresent(weeklyAvailableDays)) {
             String appointmentDay = DayFormat.format(appointment.getStartDateTime());
-            Optional<ServiceWeeklyAvailability> serviceWeeklyAvailabilityField = serviceAvailableDays.stream().filter(day
-                    -> day.isSameDayOfWeek(appointmentDay)).findFirst();
-            ServiceWeeklyAvailability serviceWeeklyAvailability;
-            if (serviceWeeklyAvailabilityField.isPresent()) {
-                serviceWeeklyAvailability = serviceWeeklyAvailabilityField.get();
-                return checkTimeSlot(appointment, serviceWeeklyAvailability.getStartTime(), serviceWeeklyAvailability.getEndTime());
+            Optional<ServiceWeeklyAvailability> dayAvailability = weeklyAvailableDays.stream()
+                    .filter(day -> day.isEquals(appointmentDay)).findFirst();
+            if (dayAvailability.isPresent()) {
+                ServiceWeeklyAvailability availableDay = dayAvailability.get();
+                return checkTimeAvailability(appointment, availableDay.getStartTime(), availableDay.getEndTime());
             }
             return createConflict(appointment);
         } else {
-            return checkTimeSlot(appointment,
+            return checkTimeAvailability(appointment,
                     appointmentServiceDefinition.getStartTime(), appointmentServiceDefinition.getEndTime());
         }
     }
 
-    private AppointmentConflict checkTimeSlot(Appointment appointment, Time serviceStartTime, Time serviceEndTime) {
+    private boolean isObjectPresent(Collection<?> object) {
+        return Objects.nonNull(object) && !object.isEmpty();
+    }
+
+    private AppointmentConflict checkTimeAvailability(Appointment appointment, Time serviceStartTime, Time serviceEndTime) {
         long appointmentStartTimeMilliSeconds = getEpochTime(appointment.getStartDateTime().getTime());
         long appointmentEndTimeMilliSeconds = getEpochTime(appointment.getEndDateTime().getTime());
         long serviceStartTimeMilliSeconds = getEpochTime(serviceStartTime.getTime());
