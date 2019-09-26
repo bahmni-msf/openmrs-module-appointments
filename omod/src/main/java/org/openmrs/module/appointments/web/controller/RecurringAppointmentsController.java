@@ -192,7 +192,7 @@ public class RecurringAppointmentsController {
                     HttpStatus.OK);
         } catch (RuntimeException e) {
             log.error("Runtime error while trying to get conflicts for recurring appointments", e);
-            return new ResponseEntity<>(RestUtil.wrapErrorResponse(e, e.getMessage()), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(RestUtil.wrapErrorResponse(e, e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

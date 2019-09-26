@@ -58,9 +58,7 @@ public class AppointmentServiceUnavailabilityConflict implements AppointmentConf
         boolean isConflict = (appointmentStartTimeMilliSeconds >= appointmentEndTimeMilliSeconds)
                 || ((appointmentStartTimeMilliSeconds < serviceStartTimeMilliSeconds)
                 || (appointmentEndTimeMilliSeconds > serviceEndTimeMilliSeconds));
-        if (isConflict)
-            return createConflict(appointment);
-        return null;
+        return isConflict ? createConflict(appointment) : null;
     }
 
     private AppointmentConflict createConflict(Appointment appointment) {
