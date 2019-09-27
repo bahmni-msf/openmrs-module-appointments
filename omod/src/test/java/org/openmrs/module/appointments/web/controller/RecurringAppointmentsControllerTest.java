@@ -313,7 +313,7 @@ public class RecurringAppointmentsControllerTest {
         verify(appointmentMapper, never()).constructConflictResponse(Collections.emptyList());
         verify(appointmentRecurringPatternService, never()).getAllAppointmentsConflicts(any());
         verify(recurringAppointmentsService, never()).generateRecurringAppointments(any());
-        assertEquals(responseEntity.getStatusCode(), HttpStatus.BAD_REQUEST);
+        assertEquals(responseEntity.getStatusCode(), HttpStatus.INTERNAL_SERVER_ERROR);
         assertEquals(((Map) ((Map) responseEntity.getBody()).get("error")).get("message"), "some error");
     }
 

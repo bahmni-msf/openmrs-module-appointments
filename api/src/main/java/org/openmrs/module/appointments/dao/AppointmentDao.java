@@ -1,6 +1,8 @@
 package org.openmrs.module.appointments.dao;
 
 import java.util.Date;
+
+import org.openmrs.logic.op.In;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentSearchRequest;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
@@ -29,4 +31,6 @@ public interface AppointmentDao {
     List<Appointment> getAllAppointmentsInDateRange(Date startDate, Date endDate);
 
     List<Appointment> search(AppointmentSearchRequest appointmentSearchRequest);
+
+    List<Appointment> getAppointmentsForPatient(Integer patientId);
 }
