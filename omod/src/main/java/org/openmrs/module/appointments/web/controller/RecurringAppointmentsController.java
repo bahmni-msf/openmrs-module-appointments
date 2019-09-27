@@ -4,7 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.APIException;
 import org.openmrs.module.appointments.model.Appointment;
-import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentRecurringPattern;
 import org.openmrs.module.appointments.service.AppointmentRecurringPatternService;
 import org.openmrs.module.appointments.service.AppointmentsService;
@@ -27,15 +26,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.validation.Valid;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.text.ParseException;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
 
 @Controller
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/recurring-appointments")
@@ -176,16 +181,8 @@ public class RecurringAppointmentsController {
             if (!errors.getAllErrors().isEmpty()) {
                 throw new APIException(errors.getAllErrors().get(0).getCodes()[1]);
             }
-            List<Appointment> appointments;
-            if(Objects.isNull(recurringAppointmentRequest.getAppointmentRequest().getUuid()))
-                appointments = recurringAppointmentsService.generateRecurringAppointments(recurringAppointmentRequest);
-            else
-            {
-                AppointmentRecurringPattern appointmentRecurringPattern = allAppointmentRecurringPatternUpdateService
-                        .getUpdatedRecurringPattern(recurringAppointmentRequest);
-                appointments = new ArrayList<>(appointmentRecurringPattern.getAppointments());
-            }
-            List<AppointmentConflict> appointmentConflicts = appointmentRecurringPatternService.getAllAppointmentsConflicts(appointments);
+            List<Appointment> appointments = getValidAppointments(recurringAppointmentRequest);
+            Map<String, List<Appointment>> appointmentConflicts = appointmentRecurringPatternService.getAllAppointmentsConflicts(appointments);
             if (appointmentConflicts.isEmpty())
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             return new ResponseEntity<>(appointmentMapper.constructConflictResponse(appointmentConflicts),
@@ -194,5 +191,17 @@ public class RecurringAppointmentsController {
             log.error("Runtime error while trying to get conflicts for recurring appointments", e);
             return new ResponseEntity<>(RestUtil.wrapErrorResponse(e, e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private List<Appointment> getValidAppointments(RecurringAppointmentRequest recurringAppointmentRequest) {
+        List<Appointment> appointments;
+        if (Objects.isNull(recurringAppointmentRequest.getAppointmentRequest().getUuid())) {
+            appointments = recurringAppointmentsService.generateRecurringAppointments(recurringAppointmentRequest);
+        } else {
+            AppointmentRecurringPattern appointmentRecurringPattern = allAppointmentRecurringPatternUpdateService
+                    .getUpdatedRecurringPattern(recurringAppointmentRequest);
+            appointments = new ArrayList<>(appointmentRecurringPattern.getAppointments());
+        }
+        return appointments;
     }
 }

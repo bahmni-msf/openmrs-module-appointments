@@ -8,7 +8,6 @@ import org.openmrs.api.LocationService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.ProviderService;
 import org.openmrs.module.appointments.model.Appointment;
-import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentKind;
 import org.openmrs.module.appointments.model.AppointmentProvider;
 import org.openmrs.module.appointments.model.AppointmentProviderResponse;
@@ -31,7 +30,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -260,8 +258,11 @@ public class AppointmentMapper {
         return appointmentProvider;
     }
 
-    public Map<String, List<AppointmentDefaultResponse>> constructConflictResponse(List<AppointmentConflict> conflictList) {
-        return conflictList.stream().collect(Collectors.groupingBy(AppointmentConflict::getType,
-                Collectors.mapping(conflict -> constructResponse(conflict.getAppointment()), Collectors.toList())));
+    public Map<String, List<AppointmentDefaultResponse>> constructConflictResponse(Map<String, List<Appointment>> conflicts) {
+        Map<String, List<AppointmentDefaultResponse>> conflictsResponse = new HashMap<>();
+        for (Map.Entry<String, List<Appointment>> entry : conflicts.entrySet()) {
+            conflictsResponse.put(entry.getKey(), constructResponse(entry.getValue()));
+        }
+        return conflictsResponse;
     }
 }

@@ -1,10 +1,8 @@
 package org.openmrs.module.appointments.service.impl;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.openmrs.api.APIAuthenticationException;
 import org.openmrs.api.APIException;
@@ -12,23 +10,28 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.appointments.conflicts.AppointmentConflictType;
 import org.openmrs.module.appointments.dao.AppointmentAuditDao;
 import org.openmrs.module.appointments.dao.AppointmentDao;
+import org.openmrs.module.appointments.helper.AppointmentServiceHelper;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentAudit;
-import org.openmrs.module.appointments.model.AppointmentSearchRequest;
-import org.openmrs.module.appointments.model.AppointmentServiceType;
-import org.openmrs.module.appointments.model.AppointmentStatus;
-import org.openmrs.module.appointments.helper.AppointmentServiceHelper;
-import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentProvider;
 import org.openmrs.module.appointments.model.AppointmentProviderResponse;
+import org.openmrs.module.appointments.model.AppointmentSearchRequest;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
+import org.openmrs.module.appointments.model.AppointmentServiceType;
+import org.openmrs.module.appointments.model.AppointmentStatus;
 import org.openmrs.module.appointments.service.AppointmentsService;
 import org.openmrs.module.appointments.validator.AppointmentStatusChangeValidator;
 import org.openmrs.module.appointments.validator.AppointmentValidator;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
@@ -38,9 +41,8 @@ import static org.openmrs.module.appointments.constants.PrivilegeConstants.RESET
 @Transactional
 public class AppointmentsServiceImpl implements AppointmentsService {
 
-    private Log log = LogFactory.getLog(this.getClass());
     private static final String PRIVILEGES_EXCEPTION_CODE = "error.privilegesRequired";
-
+    private Log log = LogFactory.getLog(this.getClass());
     private AppointmentDao appointmentDao;
 
     private List<AppointmentStatusChangeValidator> statusChangeValidators;
@@ -71,9 +73,9 @@ public class AppointmentsServiceImpl implements AppointmentsService {
         this.appointmentAuditDao = appointmentAuditDao;
     }
 
-	public void setAppointmentServiceHelper(AppointmentServiceHelper appointmentServiceHelper) {
-		this.appointmentServiceHelper = appointmentServiceHelper;
-	}
+    public void setAppointmentServiceHelper(AppointmentServiceHelper appointmentServiceHelper) {
+        this.appointmentServiceHelper = appointmentServiceHelper;
+    }
 
     public void setEditAppointmentValidators(List<AppointmentValidator> editAppointmentValidators) {
         this.editAppointmentValidators = editAppointmentValidators;
@@ -96,12 +98,12 @@ public class AppointmentsServiceImpl implements AppointmentsService {
     private boolean isCurrentUserSamePersonAsOneOfTheAppointmentProviders(Set<AppointmentProvider> providers) {
         return providers.stream()
                 .anyMatch(provider -> provider.getProvider().getPerson().
-                equals(Context.getAuthenticatedUser().getPerson()));
+                        equals(Context.getAuthenticatedUser().getPerson()));
     }
 
     @Override
     public Appointment validateAndSave(Appointment appointment) throws APIException {
-        validate(appointment, appointmentValidators );
+        validate(appointment, appointmentValidators);
         appointmentServiceHelper.checkAndAssignAppointmentNumber(appointment);
         save(appointment);
         return appointment;
@@ -116,14 +118,25 @@ public class AppointmentsServiceImpl implements AppointmentsService {
     public void validate(Appointment appointment, List<AppointmentValidator> appointmentValidators) {
         if (!validateIfUserHasSelfOrAllAppointmentsAccess(appointment)) {
             throw new APIAuthenticationException(Context.getMessageSourceService().getMessage(PRIVILEGES_EXCEPTION_CODE,
-                    new Object[] { MANAGE_APPOINTMENTS }, null));
+                    new Object[]{MANAGE_APPOINTMENTS}, null));
         }
         appointmentServiceHelper.validate(appointment, appointmentValidators);
     }
 
     @Override
-    public List<AppointmentConflict> getAppointmentConflicts(Appointment appointment) {
-        return appointmentServiceHelper.getConflictsForSingleAppointment(appointment, appointmentConflictTypes);
+    public Map<String, List<Appointment>> getAppointmentConflicts(Appointment appointment) {
+        Map<String, List<Appointment>> conflicts = new HashMap<>();
+        for (AppointmentConflictType appointmentConflictType : appointmentConflictTypes) {
+            List<Appointment> conflictAppointments = appointmentServiceHelper.getConflictsForSingleAppointment(appointment, appointmentConflictType);
+            if (CollectionUtils.isNotEmpty(conflictAppointments))
+                conflicts.put(appointmentConflictType.getType(), conflictAppointments);
+        }
+        return conflicts;
+    }
+
+    @Override
+    public List<Appointment> getAppointmentsForPatient(Integer patientId) {
+        return appointmentDao.getAppointmentsForPatient(patientId);
     }
 
     @Override
@@ -132,13 +145,14 @@ public class AppointmentsServiceImpl implements AppointmentsService {
         return appointments.stream().filter(appointment -> !isServiceOrServiceTypeVoided(appointment)).collect(Collectors.toList());
     }
 
-    private boolean isServiceOrServiceTypeVoided(Appointment appointment){
+    private boolean isServiceOrServiceTypeVoided(Appointment appointment) {
         return (appointment.getService() != null && appointment.getService().getVoided()) ||
-               (appointment.getServiceType() != null && appointment.getServiceType().getVoided());
+                (appointment.getServiceType() != null && appointment.getServiceType().getVoided());
     }
 
     /**
      * TODO: refactor. How can a search by an appointment return a list of appointments?
+     *
      * @param appointment
      * @return
      */
@@ -170,7 +184,7 @@ public class AppointmentsServiceImpl implements AppointmentsService {
     }
 
     @Override
-    public void changeStatus(Appointment appointment, String status, Date onDate) throws APIException{
+    public void changeStatus(Appointment appointment, String status, Date onDate) throws APIException {
         AppointmentStatus appointmentStatus = AppointmentStatus.valueOf(status);
         validateUserPrivilege(appointment, appointmentStatus);
         appointmentServiceHelper.validateStatusChangeAndGetErrors(appointment, appointmentStatus, statusChangeValidators);
@@ -202,10 +216,10 @@ public class AppointmentsServiceImpl implements AppointmentsService {
     }
 
     @Override
-    public void undoStatusChange(Appointment appointment) throws APIException{
+    public void undoStatusChange(Appointment appointment) throws APIException {
         if (!validateIfUserHasSelfOrAllAppointmentsAccess(appointment)) {
             throw new APIAuthenticationException(Context.getMessageSourceService().getMessage(PRIVILEGES_EXCEPTION_CODE,
-                    new Object[] { MANAGE_APPOINTMENTS }, null));
+                    new Object[]{MANAGE_APPOINTMENTS}, null));
         }
         AppointmentAudit statusChangeEvent = appointmentAuditDao.getPriorStatusChangeEvent(appointment);
         if (statusChangeEvent != null) {
@@ -266,7 +280,6 @@ public class AppointmentsServiceImpl implements AppointmentsService {
             throw new RuntimeException(e);
         }
     }
-
 
 
     private void createEventInAppointmentAudit(Appointment appointment,

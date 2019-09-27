@@ -18,7 +18,6 @@ import org.openmrs.module.appointments.dao.AppointmentRecurringPatternDao;
 import org.openmrs.module.appointments.helper.AppointmentServiceHelper;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentAudit;
-import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentKind;
 import org.openmrs.module.appointments.model.AppointmentRecurringPattern;
 import org.openmrs.module.appointments.model.AppointmentStatus;
@@ -34,12 +33,23 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyListOf;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.openmrs.module.appointments.model.AppointmentStatus.CheckedIn;
 import static org.openmrs.module.appointments.model.AppointmentStatus.Scheduled;
 
@@ -252,7 +262,7 @@ public class AppointmentRecurringPatternServiceImplTest {
         recurringAppointmentService.update(appointmentRecurringPattern, appointment);
 
         verify(appointmentDao, never()).save(any(Appointment.class));
-        verify(appointmentServiceHelper,never()).getAppointmentAsJsonString(any());
+        verify(appointmentServiceHelper, never()).getAppointmentAsJsonString(any());
         verify(appointmentServiceHelper, never()).getAppointmentAuditEvent(any(), any());
         verify(appointmentServiceHelper, never()).checkAndAssignAppointmentNumber(any());
     }
@@ -293,7 +303,7 @@ public class AppointmentRecurringPatternServiceImplTest {
         recurringAppointmentService.update(appointmentRecurringPattern, updatedAppointments);
 
         verify(appointmentDao, never()).save(any(Appointment.class));
-        verify(appointmentServiceHelper,never()).getAppointmentAsJsonString(any());
+        verify(appointmentServiceHelper, never()).getAppointmentAsJsonString(any());
         verify(appointmentServiceHelper, never()).getAppointmentAuditEvent(any(), any());
         verify(appointmentServiceHelper, never()).checkAndAssignAppointmentNumber(any());
     }
@@ -301,10 +311,10 @@ public class AppointmentRecurringPatternServiceImplTest {
     @Test
     public void shouldCallServiceHelperOnGetAllConflicts() {
         List<Appointment> appointments = mock(List.class);
-        List<AppointmentConflict> conflicts = mock(List.class);
+        Map<String, List<Appointment>> conflicts = mock(Map.class);
 
         doReturn(conflicts).when(appointmentServiceHelper).getConflictsForMultipleAppointments(appointments, appointmentConflictTypes);
-        List<AppointmentConflict> appointmentsConflicts = recurringAppointmentService.getAllAppointmentsConflicts(appointments);
+        Map<String, List<Appointment>> appointmentsConflicts = recurringAppointmentService.getAllAppointmentsConflicts(appointments);
 
         verify(appointmentServiceHelper).getConflictsForMultipleAppointments(appointments, appointmentConflictTypes);
         assertNotNull(appointmentsConflicts);

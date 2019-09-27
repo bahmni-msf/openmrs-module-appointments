@@ -6,23 +6,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.appointments.constants.AppointmentConflictTypeEnum;
 import org.openmrs.module.appointments.dao.AppointmentAuditDao;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentAudit;
 import org.openmrs.module.appointments.service.AppointmentsService;
 import org.openmrs.module.appointments.web.BaseIntegrationTest;
-import org.openmrs.module.appointments.web.contract.AppointmentDefaultResponse;
 import org.openmrs.module.appointments.web.contract.RecurringAppointmentDefaultResponse;
-import org.openmrs.module.appointments.web.helper.DateHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -31,17 +24,14 @@ import static org.junit.Assert.assertNull;
 
 public class RecurringAppointmentsControllerIT extends BaseIntegrationTest {
 
-    @Autowired
-    RecurringAppointmentsController recurringAppointmentsController;
-
-    @Autowired
-    AppointmentsService appointmentsService;
-
-    @Autowired
-    AppointmentAuditDao appointmentAuditDao;
-
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
+    @Autowired
+    RecurringAppointmentsController recurringAppointmentsController;
+    @Autowired
+    AppointmentsService appointmentsService;
+    @Autowired
+    AppointmentAuditDao appointmentAuditDao;
 
     @Before
     public void setUp() throws Exception {

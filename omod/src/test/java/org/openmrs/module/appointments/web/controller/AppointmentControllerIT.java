@@ -9,7 +9,6 @@ import org.openmrs.module.appointments.dao.AppointmentAuditDao;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentAudit;
 import org.openmrs.module.appointments.service.AppointmentsService;
-import org.openmrs.module.appointments.util.DateUtil;
 import org.openmrs.module.appointments.web.BaseIntegrationTest;
 import org.openmrs.module.appointments.web.contract.AppointmentDefaultResponse;
 import org.openmrs.module.appointments.web.contract.AppointmentsSummary;
@@ -25,7 +24,6 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class AppointmentControllerIT extends BaseIntegrationTest {
@@ -73,9 +71,9 @@ public class AppointmentControllerIT extends BaseIntegrationTest {
                 "\"endDateTime\": \"2017-07-20\",  " +
                 "\"appointmentKind\": \"WalkIn\", " +
                 "\"providers\": [ {" +
-                    "\"uuid\":\"2d15071d-439d-44e8-9825-aa8e1a30d2a2\"," +
-                    "\"comments\":\"available\"," +
-                    "\"response\":\"ACCEPTED\"" +
+                "\"uuid\":\"2d15071d-439d-44e8-9825-aa8e1a30d2a2\"," +
+                "\"comments\":\"available\"," +
+                "\"response\":\"ACCEPTED\"" +
                 "} ] }";
 
         MockHttpServletResponse response = handle(newPostRequest("/rest/v1/appointment", content));

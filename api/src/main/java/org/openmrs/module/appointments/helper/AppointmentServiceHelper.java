@@ -7,15 +7,14 @@ import org.openmrs.api.APIException;
 import org.openmrs.module.appointments.conflicts.AppointmentConflictType;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentAudit;
-import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentStatus;
+import org.openmrs.module.appointments.util.DateUtil;
 import org.openmrs.module.appointments.validator.AppointmentStatusChangeValidator;
 import org.openmrs.module.appointments.validator.AppointmentValidator;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +35,7 @@ public class AppointmentServiceHelper {
         return "0000";
     }
 
-    public AppointmentAudit getAppointmentAuditEvent(Appointment appointment,String notes) {
+    public AppointmentAudit getAppointmentAuditEvent(Appointment appointment, String notes) {
         AppointmentAudit appointmentAuditEvent = new AppointmentAudit();
         appointmentAuditEvent.setAppointment(appointment);
         appointmentAuditEvent.setStatus(appointment.getStatus());
@@ -46,7 +45,7 @@ public class AppointmentServiceHelper {
 
     //TODO refactor throwing of IOExeption. Its forcing everywhere the exception to be caught and rethrown
     public String getAppointmentAsJsonString(Appointment appointment) throws IOException {
-        Map appointmentJson = new HashMap<String,String>();
+        Map appointmentJson = new HashMap<String, String>();
         String serviceUuid = appointment.getService().getUuid();
         appointmentJson.put("serviceUuid", serviceUuid);
         String serviceTypeUuid = appointment.getServiceType() != null ? appointment.getServiceType().getUuid() : null;
@@ -66,7 +65,7 @@ public class AppointmentServiceHelper {
 
     private void validateAppointment(Appointment appointment, List<AppointmentValidator> appointmentValidators,
                                      List<String> errors) {
-        if(!CollectionUtils.isEmpty(appointmentValidators)) {
+        if (!CollectionUtils.isEmpty(appointmentValidators)) {
             for (AppointmentValidator validator : appointmentValidators) {
                 validator.validate(appointment, errors);
             }
@@ -93,8 +92,8 @@ public class AppointmentServiceHelper {
     }
 
     public void validateStatusChangeAndGetErrors(Appointment appointment,
-                                     AppointmentStatus appointmentStatus,
-                                     List<AppointmentStatusChangeValidator> statusChangeValidators) {
+                                                 AppointmentStatus appointmentStatus,
+                                                 List<AppointmentStatusChangeValidator> statusChangeValidators) {
         List<String> errors = new ArrayList<>();
         validateStatusChange(appointment, appointmentStatus, errors, statusChangeValidators);
         if (!errors.isEmpty()) {
@@ -103,34 +102,31 @@ public class AppointmentServiceHelper {
         }
     }
 
-    public List<AppointmentConflict> getConflictsForMultipleAppointments(
+    public Map<String, List<Appointment>> getConflictsForMultipleAppointments(
             List<Appointment> appointments, List<AppointmentConflictType> appointmentConflictTypes) {
+        Map<String, List<Appointment>> conflictsMap = new HashMap<>();
         List<Appointment> filteredAppointments = getNonVoidedFutureAppointments(appointments);
-        List<AppointmentConflict> allConflicts = new ArrayList<>();
-        for (Appointment appointment : filteredAppointments) {
-            List<AppointmentConflict> appointmentConflicts = getConflictsForSingleAppointment(appointment, appointmentConflictTypes);
-            if (CollectionUtils.isNotEmpty(appointmentConflicts))
-                allConflicts.addAll(appointmentConflicts);
+        for (AppointmentConflictType appointmentConflictType : appointmentConflictTypes) {
+            List<Appointment> conflicts = new ArrayList<>();
+            for (Appointment appointment : filteredAppointments) {
+                List<Appointment> conflictingAppointments = getConflictsForSingleAppointment(appointment, appointmentConflictType);
+                if (Objects.nonNull(conflictingAppointments) && CollectionUtils.isNotEmpty(conflictingAppointments))
+                    conflicts.addAll(conflictingAppointments);
+            }
+            if (CollectionUtils.isNotEmpty(conflicts))
+                conflictsMap.put(appointmentConflictType.getType(), conflicts);
         }
-        return allConflicts;
+        return conflictsMap;
+    }
+
+    public List<Appointment> getConflictsForSingleAppointment(
+            Appointment appointment, AppointmentConflictType appointmentConflictType) {
+        return appointmentConflictType.getAppointmentConflicts(appointment);
     }
 
     private List<Appointment> getNonVoidedFutureAppointments(List<Appointment> appointments) {
-        return appointments.stream()
-                .filter(appointment -> !(appointment.getVoided() || appointment.getStartDateTime().before(new Date())))
-                .collect(Collectors.toList());
-    }
-
-    public List<AppointmentConflict> getConflictsForSingleAppointment(
-            Appointment appointment, List<AppointmentConflictType> appointmentConflictTypes) {
-        List<AppointmentConflict> appointmentConflicts = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(appointmentConflictTypes)) {
-            for (AppointmentConflictType appointmentConflictType : appointmentConflictTypes) {
-                AppointmentConflict conflict = appointmentConflictType.getAppointmentConflicts(appointment);
-                if (Objects.nonNull(conflict))
-                    appointmentConflicts.add(conflict);
-            }
-        }
-        return appointmentConflicts;
+        return appointments.stream().filter(appointment -> { checkAndAssignAppointmentNumber(appointment);
+            return !(appointment.getVoided() || appointment.getStartDateTime().before(DateUtil.getStartOfDay()));
+        }).collect(Collectors.toList());
     }
 }

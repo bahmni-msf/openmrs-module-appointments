@@ -7,9 +7,9 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.openmrs.Patient;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentSearchRequest;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
@@ -27,13 +27,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyList;
-import java.util.Map;
-
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
@@ -47,11 +46,9 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class AppointmentsControllerTest {
 
     @Mock
-    private AppointmentsService appointmentsService;
-
-    @Mock
     AppointmentSearchValidator appointmentSearchValidator;
-
+    @Mock
+    private AppointmentsService appointmentsService;
     @Mock
     private AppointmentMapper appointmentMapper;
 

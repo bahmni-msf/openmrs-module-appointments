@@ -10,7 +10,6 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openmrs.module.appointments.model.Appointment;
-import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentRecurringPattern;
 import org.openmrs.module.appointments.service.AppointmentRecurringPatternService;
 import org.openmrs.module.appointments.service.AppointmentsService;
@@ -30,8 +29,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 
-import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -49,41 +55,30 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 public class RecurringAppointmentsControllerTest {
 
-    @InjectMocks
-    private RecurringAppointmentsController recurringAppointmentsController;
-
-    @Mock
-    private AppointmentRecurringPatternService appointmentRecurringPatternService;
-
-    @Mock
-    private RecurringAppointmentsService recurringAppointmentsService;
-
-    @Mock
-    private RecurringPatternValidator recurringPatternValidator;
-
-    @Mock
-    private TimeZoneValidator timeZoneValidator;
-
-    @Mock
-    private RecurringPatternMapper recurringPatternMapper;
-
-    @Mock
-    private RecurringAppointmentMapper recurringAppointmentMapper;
-
-    @Mock
-    private AppointmentMapper appointmentMapper;
-
-    @Mock
-    private SingleAppointmentRecurringPatternUpdateService singleAppointmentRecurringPatternUpdateService;
-
-    @Mock
-    private AllAppointmentRecurringPatternUpdateService allAppointmentRecurringPatternUpdateService;
-
-    @Mock
-    private AppointmentsService appointmentsService;
-
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
+    @InjectMocks
+    private RecurringAppointmentsController recurringAppointmentsController;
+    @Mock
+    private AppointmentRecurringPatternService appointmentRecurringPatternService;
+    @Mock
+    private RecurringAppointmentsService recurringAppointmentsService;
+    @Mock
+    private RecurringPatternValidator recurringPatternValidator;
+    @Mock
+    private TimeZoneValidator timeZoneValidator;
+    @Mock
+    private RecurringPatternMapper recurringPatternMapper;
+    @Mock
+    private RecurringAppointmentMapper recurringAppointmentMapper;
+    @Mock
+    private AppointmentMapper appointmentMapper;
+    @Mock
+    private SingleAppointmentRecurringPatternUpdateService singleAppointmentRecurringPatternUpdateService;
+    @Mock
+    private AllAppointmentRecurringPatternUpdateService allAppointmentRecurringPatternUpdateService;
+    @Mock
+    private AppointmentsService appointmentsService;
 
     @Before
     public void setUp() throws Exception {
@@ -310,7 +305,7 @@ public class RecurringAppointmentsControllerTest {
 
 
         ResponseEntity<Object> responseEntity = recurringAppointmentsController.conflicts(recurringAppointmentRequest);
-        verify(appointmentMapper, never()).constructConflictResponse(Collections.emptyList());
+        verify(appointmentMapper, never()).constructConflictResponse(Collections.emptyMap());
         verify(appointmentRecurringPatternService, never()).getAllAppointmentsConflicts(any());
         verify(recurringAppointmentsService, never()).generateRecurringAppointments(any());
         assertEquals(responseEntity.getStatusCode(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -322,7 +317,7 @@ public class RecurringAppointmentsControllerTest {
         RecurringAppointmentRequest recurringAppointmentRequest = new RecurringAppointmentRequest();
         recurringAppointmentRequest.setAppointmentRequest(mock(AppointmentRequest.class));
         List<Appointment> appointments = mock(List.class);
-        List<AppointmentConflict> conflicts = mock(List.class);
+        Map<String, List<Appointment>> conflicts = mock(Map.class);
         when(recurringAppointmentsService.generateRecurringAppointments(recurringAppointmentRequest)).thenReturn(appointments);
         when(appointmentRecurringPatternService.getAllAppointmentsConflicts(appointments)).thenReturn(conflicts);
 
@@ -341,13 +336,12 @@ public class RecurringAppointmentsControllerTest {
         RecurringAppointmentRequest recurringAppointmentRequest = new RecurringAppointmentRequest();
         recurringAppointmentRequest.setAppointmentRequest(appointmentRequest);
         Set<Appointment> appointments = mock(Set.class);
-        List<AppointmentConflict> conflicts = mock(List.class);
         AppointmentRecurringPattern appointmentRecurringPattern = new AppointmentRecurringPattern();
         appointmentRecurringPattern.setAppointments(appointments);
         when(allAppointmentRecurringPatternUpdateService.getUpdatedRecurringPattern(recurringAppointmentRequest)).thenReturn(mock(AppointmentRecurringPattern.class));
         ResponseEntity<Object> responseEntity = recurringAppointmentsController.conflicts(recurringAppointmentRequest);
         verify(allAppointmentRecurringPatternUpdateService).getUpdatedRecurringPattern(recurringAppointmentRequest);
-        assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode() );
+        assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
         assertNull(responseEntity.getBody());
 
     }

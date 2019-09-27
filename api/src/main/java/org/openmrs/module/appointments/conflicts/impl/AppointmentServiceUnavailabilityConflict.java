@@ -2,7 +2,6 @@ package org.openmrs.module.appointments.conflicts.impl;
 
 import org.openmrs.module.appointments.conflicts.AppointmentConflictType;
 import org.openmrs.module.appointments.model.Appointment;
-import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
 import org.openmrs.module.appointments.model.ServiceWeeklyAvailability;
 
@@ -10,7 +9,9 @@ import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -24,12 +25,17 @@ public class AppointmentServiceUnavailabilityConflict implements AppointmentConf
     private final SimpleDateFormat DayFormat = new SimpleDateFormat("EEEE");
 
     @Override
-    public AppointmentConflict getAppointmentConflicts(Appointment appointment) {
+    public String getType() {
+        return SERVICE_UNAVAILABLE.name();
+    }
+
+    @Override
+    public List<Appointment> getAppointmentConflicts(Appointment appointment) {
         AppointmentServiceDefinition appointmentServiceDefinition = appointment.getService();
         return checkConflicts(appointment, appointmentServiceDefinition);
     }
 
-    private AppointmentConflict checkConflicts(Appointment appointment, AppointmentServiceDefinition appointmentServiceDefinition) {
+    private List<Appointment> checkConflicts(Appointment appointment, AppointmentServiceDefinition appointmentServiceDefinition) {
         Set<ServiceWeeklyAvailability> weeklyAvailableDays = appointmentServiceDefinition.getWeeklyAvailability();
         if (isObjectPresent(weeklyAvailableDays)) {
             String appointmentDay = DayFormat.format(appointment.getStartDateTime());
@@ -37,20 +43,20 @@ public class AppointmentServiceUnavailabilityConflict implements AppointmentConf
                     .filter(day -> day.isEquals(appointmentDay)).findFirst();
             if (dayAvailability.isPresent()) {
                 ServiceWeeklyAvailability availableDay = dayAvailability.get();
-                return checkTimeAvailability(appointment, availableDay.getStartTime(), availableDay.getEndTime());
+                appointment = checkTimeAvailability(appointment, availableDay.getStartTime(), availableDay.getEndTime());
             }
-            return createConflict(appointment);
         } else {
-            return checkTimeAvailability(appointment,
+            appointment = checkTimeAvailability(appointment,
                     appointmentServiceDefinition.getStartTime(), appointmentServiceDefinition.getEndTime());
         }
+        return Objects.nonNull(appointment) ? Collections.singletonList(appointment) : null;
     }
 
     private boolean isObjectPresent(Collection<?> object) {
         return Objects.nonNull(object) && !object.isEmpty();
     }
 
-    private AppointmentConflict checkTimeAvailability(Appointment appointment, Time serviceStartTime, Time serviceEndTime) {
+    private Appointment checkTimeAvailability(Appointment appointment, Time serviceStartTime, Time serviceEndTime) {
         long appointmentStartTimeMilliSeconds = getEpochTime(appointment.getStartDateTime().getTime());
         long appointmentEndTimeMilliSeconds = getEpochTime(appointment.getEndDateTime().getTime());
         long serviceStartTimeMilliSeconds = getEpochTime(serviceStartTime.getTime());
@@ -58,14 +64,7 @@ public class AppointmentServiceUnavailabilityConflict implements AppointmentConf
         boolean isConflict = (appointmentStartTimeMilliSeconds >= appointmentEndTimeMilliSeconds)
                 || ((appointmentStartTimeMilliSeconds < serviceStartTimeMilliSeconds)
                 || (appointmentEndTimeMilliSeconds > serviceEndTimeMilliSeconds));
-        return isConflict ? createConflict(appointment) : null;
-    }
-
-    private AppointmentConflict createConflict(Appointment appointment) {
-        AppointmentConflict appointmentConflict = new AppointmentConflict();
-        appointmentConflict.setType(SERVICE_UNAVAILABLE.name());
-        appointmentConflict.setAppointment(appointment);
-        return appointmentConflict;
+        return isConflict ? appointment : null;
     }
 
     private long getEpochTime(long date) {

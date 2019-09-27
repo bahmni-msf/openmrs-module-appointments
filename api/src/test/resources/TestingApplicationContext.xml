@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:context="http://www.springframework.org/schema/context"
+       xmlns="http://www.springframework.org/schema/beans"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
   		    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
   		    http://www.springframework.org/schema/context
@@ -22,7 +22,8 @@
         <!--  default properties must be set in the hibernate.default.properties -->
     </bean>
 
-    <bean id="administrationService" name="administrationService" class="org.openmrs.api.impl.AdministrationServiceImpl"/>
+    <bean id="administrationService" name="administrationService"
+          class="org.openmrs.api.impl.AdministrationServiceImpl"/>
     <bean parent="serviceContext">
         <property name="moduleService">
             <list merge="true">
@@ -111,7 +112,8 @@
         </property>
     </bean>
 
-    <bean id="defaultEditAppointmentValidator" class="org.openmrs.module.appointments.validator.impl.DefaultEditAppointmentValidator">
+    <bean id="defaultEditAppointmentValidator"
+          class="org.openmrs.module.appointments.validator.impl.DefaultEditAppointmentValidator">
         <property name="appointmentDao">
             <ref bean="appointmentDao"/>
         </property>
@@ -193,7 +195,8 @@
         </property>
     </bean>
 
-    <bean id="appointmentServiceService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+    <bean id="appointmentServiceService"
+          class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
         <property name="transactionManager">
             <ref bean="transactionManager"/>
         </property>

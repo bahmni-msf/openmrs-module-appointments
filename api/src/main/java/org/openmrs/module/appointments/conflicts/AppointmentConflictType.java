@@ -1,10 +1,13 @@
 package org.openmrs.module.appointments.conflicts;
 
 import org.openmrs.module.appointments.model.Appointment;
-import org.openmrs.module.appointments.model.AppointmentConflict;
+
+import java.util.List;
 
 
 public interface AppointmentConflictType {
 
-    AppointmentConflict getAppointmentConflicts(Appointment appointment);
+    String getType();
+
+    List<Appointment> getAppointmentConflicts(Appointment appointment);
 }

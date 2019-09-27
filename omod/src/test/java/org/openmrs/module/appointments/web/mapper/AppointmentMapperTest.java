@@ -8,24 +8,55 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openmrs.*;
+import org.openmrs.Location;
+import org.openmrs.Patient;
+import org.openmrs.PatientIdentifier;
+import org.openmrs.PersonName;
+import org.openmrs.Provider;
 import org.openmrs.api.LocationService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.ProviderService;
-import org.openmrs.module.appointments.model.*;
+import org.openmrs.module.appointments.model.Appointment;
+import org.openmrs.module.appointments.model.AppointmentKind;
+import org.openmrs.module.appointments.model.AppointmentProvider;
+import org.openmrs.module.appointments.model.AppointmentProviderResponse;
+import org.openmrs.module.appointments.model.AppointmentRecurringPattern;
+import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
+import org.openmrs.module.appointments.model.AppointmentServiceType;
+import org.openmrs.module.appointments.model.AppointmentStatus;
+import org.openmrs.module.appointments.model.Speciality;
 import org.openmrs.module.appointments.service.AppointmentServiceDefinitionService;
 import org.openmrs.module.appointments.service.AppointmentsService;
 import org.openmrs.module.appointments.util.DateUtil;
-import org.openmrs.module.appointments.web.contract.*;
+import org.openmrs.module.appointments.web.contract.AppointmentDefaultResponse;
+import org.openmrs.module.appointments.web.contract.AppointmentProviderDetail;
+import org.openmrs.module.appointments.web.contract.AppointmentQuery;
+import org.openmrs.module.appointments.web.contract.AppointmentRequest;
+import org.openmrs.module.appointments.web.contract.AppointmentServiceDefaultResponse;
 import org.openmrs.module.appointments.web.extension.AppointmentResponseExtension;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.openmrs.module.appointments.constants.AppointmentConflictTypeEnum.SERVICE_UNAVAILABLE;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -634,26 +665,21 @@ public class AppointmentMapperTest {
         appTwo.setPatient(patient);
         appTwo.setAppointmentKind(AppointmentKind.Scheduled);
 
-        AppointmentConflict conflictOne = new AppointmentConflict();
-        conflictOne.setType(SERVICE_UNAVAILABLE.name());
-        conflictOne.setAppointment(appOne);
-        AppointmentConflict conflictTwo = new AppointmentConflict();
-        conflictTwo.setType(SERVICE_UNAVAILABLE.name());
-        conflictTwo.setAppointment(appTwo);
-        List<AppointmentConflict> conflicts = Arrays.asList(conflictOne,conflictTwo);
+        Map<String, List<Appointment>> conflicts = new HashMap<>();
+        conflicts.put(SERVICE_UNAVAILABLE.name(), Arrays.asList(appOne, appTwo));
 
         Map<String, List<AppointmentDefaultResponse>> responseMap = appointmentMapper.constructConflictResponse(conflicts);
 
         assertNotNull(responseMap);
-        assertEquals(1,responseMap.size());
-        assertEquals(2,responseMap.get(SERVICE_UNAVAILABLE.name()).size());
+        assertEquals(1, responseMap.size());
+        assertEquals(2, responseMap.get(SERVICE_UNAVAILABLE.name()).size());
     }
 
     @Test
     public void shouldReturnEmptyMapForEmptyListOfConflicts() {
-        Map<String, List<AppointmentDefaultResponse>> responseMap = appointmentMapper.constructConflictResponse(Collections.emptyList());
+        Map<String, List<AppointmentDefaultResponse>> responseMap = appointmentMapper.constructConflictResponse(Collections.emptyMap());
 
         assertNotNull(responseMap);
-        assertEquals(0,responseMap.size());
+        assertEquals(0, responseMap.size());
     }
 }

@@ -1,6 +1,5 @@
 package org.openmrs.module.appointments.web.controller;
 
-import org.apache.lucene.search.Collector;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,11 +9,19 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.openmrs.Patient;
 import org.openmrs.api.APIException;
-import org.openmrs.module.appointments.model.*;
+import org.openmrs.module.appointments.model.Appointment;
+import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
+import org.openmrs.module.appointments.model.AppointmentServiceType;
+import org.openmrs.module.appointments.model.AppointmentStatus;
 import org.openmrs.module.appointments.service.AppointmentServiceDefinitionService;
 import org.openmrs.module.appointments.service.AppointmentsService;
 import org.openmrs.module.appointments.util.DateUtil;
-import org.openmrs.module.appointments.web.contract.*;
+import org.openmrs.module.appointments.web.contract.AppointmentDefaultResponse;
+import org.openmrs.module.appointments.web.contract.AppointmentQuery;
+import org.openmrs.module.appointments.web.contract.AppointmentRequest;
+import org.openmrs.module.appointments.web.contract.AppointmentServiceDefaultResponse;
+import org.openmrs.module.appointments.web.contract.AppointmentsSummary;
+import org.openmrs.module.appointments.web.contract.DailyAppointmentServiceSummary;
 import org.openmrs.module.appointments.web.mapper.AppointmentMapper;
 import org.openmrs.module.appointments.web.mapper.AppointmentServiceMapper;
 import org.springframework.http.HttpStatus;
@@ -22,12 +29,15 @@ import org.springframework.http.ResponseEntity;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -264,7 +274,7 @@ public class AppointmentControllerTest {
         Appointment appointment = mock(Appointment.class);
 
         when(appointmentMapper.fromRequest(appointmentRequest)).thenReturn(appointment);
-        when(appointmentsService.getAppointmentConflicts(appointment)).thenReturn(mock(List.class));
+        when(appointmentsService.getAppointmentConflicts(appointment)).thenReturn(mock(Map.class));
 
         appointmentController.conflicts(appointmentRequest);
 

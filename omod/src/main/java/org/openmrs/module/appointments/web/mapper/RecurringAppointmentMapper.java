@@ -2,7 +2,6 @@ package org.openmrs.module.appointments.web.mapper;
 
 import org.openmrs.module.appointments.conflicts.AppointmentConflictType;
 import org.openmrs.module.appointments.model.Appointment;
-import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.web.contract.AppointmentConflictResponse;
 import org.openmrs.module.appointments.web.contract.AppointmentDefaultResponse;
 import org.openmrs.module.appointments.web.contract.RecurringAppointmentDefaultResponse;

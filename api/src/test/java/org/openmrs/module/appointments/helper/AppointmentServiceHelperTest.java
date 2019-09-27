@@ -13,7 +13,6 @@ import org.openmrs.module.appointments.conflicts.AppointmentConflictType;
 import org.openmrs.module.appointments.conflicts.impl.AppointmentServiceUnavailabilityConflict;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentAudit;
-import org.openmrs.module.appointments.model.AppointmentConflict;
 import org.openmrs.module.appointments.model.AppointmentKind;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
 import org.openmrs.module.appointments.model.AppointmentServiceType;
@@ -29,6 +28,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -203,49 +203,73 @@ public class AppointmentServiceHelperTest {
         AppointmentConflictType appointmentConflictType = mock(AppointmentServiceUnavailabilityConflict.class);
         List<Appointment> appointments = Arrays.asList(appointmentOne, appointmentTwo, appointmentFour);
         List<AppointmentConflictType> conflictTypes = Collections.singletonList(appointmentConflictType);
-        AppointmentConflict conflictOne = mock(AppointmentConflict.class);
-        when(appointmentConflictType.getAppointmentConflicts(any())).thenReturn(conflictOne);
+        when(appointmentConflictType.getAppointmentConflicts(any())).thenReturn(Collections.singletonList(appointmentOne));
 
-        List<AppointmentConflict> conflicts = appointmentServiceHelper.getConflictsForMultipleAppointments(appointments, conflictTypes);
+        Map<String, List<Appointment>> conflictsMap = appointmentServiceHelper.getConflictsForMultipleAppointments(appointments, conflictTypes);
 
         verify(appointmentConflictType).getAppointmentConflicts(appointmentOne);
         verify(appointmentConflictType).getAppointmentConflicts(appointmentFour);
-        assertEquals(2,conflicts.size());
+        assertEquals(1,conflictsMap.size());
     }
 
     @Test
-    public void shouldNotReturnConflictWhenItsNull() {
+    public void shouldNotReturnEmptyMapWhenConflictAreNull() {
         Appointment appointmentOne = new Appointment();
         appointmentOne.setAppointmentId(1);
         appointmentOne.setVoided(false);
-        appointmentOne.setStartDateTime(DateHelper.getDate(2019,9,1,11,30,0));
+        appointmentOne.setStartDateTime(DateHelper.getDate(2019, 9, 1, 11, 30, 0));
 
         Appointment appointmentTwo = new Appointment();
         appointmentTwo.setAppointmentId(2);
         appointmentTwo.setVoided(false);
-        appointmentTwo.setStartDateTime(DateHelper.getDate(2019,9,2,11,30,0));
+        appointmentTwo.setStartDateTime(DateHelper.getDate(2019, 9, 2, 11, 30, 0));
 
         Appointment appointmentThree = new Appointment();
         appointmentThree.setAppointmentId(3);
         appointmentThree.setVoided(false);
-        appointmentThree.setStartDateTime(DateHelper.getDate(2019,9,3,11,30,0));
+        appointmentThree.setStartDateTime(DateHelper.getDate(2019, 9, 3, 11, 30, 0));
 
         AppointmentConflictType appointmentConflictType = mock(AppointmentServiceUnavailabilityConflict.class);
 
         List<Appointment> appointments = Arrays.asList(appointmentOne, appointmentTwo, appointmentThree);
 
         List<AppointmentConflictType> conflictTypes = Collections.singletonList(appointmentConflictType);
-        AppointmentConflict conflictOne = mock(AppointmentConflict.class);
-        when(appointmentConflictType.getAppointmentConflicts(appointmentOne)).thenReturn(conflictOne);
-        when(appointmentConflictType.getAppointmentConflicts(appointmentTwo)).thenReturn(conflictOne);
-        when(appointmentConflictType.getAppointmentConflicts(appointmentThree)).thenReturn(null);
+        when(appointmentConflictType.getAppointmentConflicts(any())).thenReturn(null);
 
-        List<AppointmentConflict> conflicts = appointmentServiceHelper.getConflictsForMultipleAppointments(appointments, conflictTypes);
+        Map<String, List<Appointment>> conflictsMap = appointmentServiceHelper.getConflictsForMultipleAppointments(appointments, conflictTypes);
 
         verify(appointmentConflictType).getAppointmentConflicts(appointmentOne);
         verify(appointmentConflictType).getAppointmentConflicts(appointmentTwo);
         verify(appointmentConflictType).getAppointmentConflicts(appointmentThree);
-        assertEquals(2,conflicts.size());
+        assertEquals(0, conflictsMap.size());
     }
 
+    @Test
+    public void shouldReturnListOfAppointmentsHavingConflicts() {
+        Appointment appointmentOne = new Appointment();
+        appointmentOne.setAppointmentId(1);
+        appointmentOne.setVoided(false);
+        appointmentOne.setStartDateTime(DateHelper.getDate(2019, 9, 1, 11, 30, 0));
+
+        Appointment appointmentTwo = new Appointment();
+        appointmentTwo.setAppointmentId(2);
+        appointmentTwo.setVoided(true);
+        appointmentTwo.setStartDateTime(DateHelper.getDate(2019, 9, 2, 11, 30, 0));
+
+        Appointment appointmentThree = new Appointment();
+        appointmentThree.setAppointmentId(3);
+        appointmentThree.setVoided(false);
+        appointmentThree.setStartDateTime(DateHelper.getDate(2119, 9, 3, 11, 30, 0));
+
+        AppointmentConflictType appointmentConflictType = mock(AppointmentServiceUnavailabilityConflict.class);
+
+        List<Appointment> appointments = Arrays.asList(appointmentOne, appointmentTwo, appointmentThree);
+
+        List<AppointmentConflictType> conflictTypes = Collections.singletonList(appointmentConflictType);
+        when(appointmentConflictType.getAppointmentConflicts(any())).thenReturn(null);
+
+        appointmentServiceHelper.getConflictsForMultipleAppointments(appointments, conflictTypes);
+        verify(appointmentConflictType).getAppointmentConflicts(appointmentThree);
+
+    }
 }

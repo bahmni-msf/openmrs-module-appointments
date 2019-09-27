@@ -1,6 +1,7 @@
 package org.openmrs.module.appointments.dao.impl;
 
 import org.hibernate.Criteria;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Example;
 import org.hibernate.criterion.Restrictions;
@@ -104,7 +105,9 @@ public class AppointmentDaoImpl implements AppointmentDao {
     public Appointment getAppointmentByUuid(String uuid) {
         Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Appointment.class, "appointment");
         criteria.add(Restrictions.eq("uuid", uuid));
-        return (Appointment) criteria.uniqueResult();
+        Appointment appointment=(Appointment) criteria.uniqueResult();
+        sessionFactory.close();
+        return appointment;
     }
 
     @Override
@@ -133,6 +136,7 @@ public class AppointmentDaoImpl implements AppointmentDao {
 
     @Override
     public List<Appointment> getAppointmentsForPatient(Integer patientId) {
+
         Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Appointment.class);
         criteria.createAlias("patient", "patient");
         criteria.add(Restrictions.eq("patient.patientId", patientId));
