@@ -308,18 +308,18 @@ public class AppointmentRecurringPatternServiceImplTest {
         verify(appointmentServiceHelper, never()).checkAndAssignAppointmentNumber(any());
     }
 
-    @Test
-    public void shouldCallServiceHelperOnGetAllConflicts() {
-        List<Appointment> appointments = mock(List.class);
-        Map<String, List<Appointment>> conflicts = mock(Map.class);
-
-        doReturn(conflicts).when(appointmentServiceHelper).getConflictsForMultipleAppointments(appointments, appointmentConflictTypes);
-        Map<String, List<Appointment>> appointmentsConflicts = recurringAppointmentService.getAllAppointmentsConflicts(appointments);
-
-        verify(appointmentServiceHelper).getConflictsForMultipleAppointments(appointments, appointmentConflictTypes);
-        assertNotNull(appointmentsConflicts);
-
-    }
+//    @Test
+//    public void shouldCallServiceHelperOnGetAllConflicts() {
+//        List<Appointment> appointments = mock(List.class);
+//        Map<String, List<Appointment>> conflicts = mock(Map.class);
+//
+//        doReturn(conflicts).when(appointmentServiceHelper).getConflictsForMultipleAppointments(appointments, appointmentConflictTypes);
+//        Map<String, List<Appointment>> appointmentsConflicts = recurringAppointmentService.getAllAppointmentsConflicts(appointments);
+//
+//        verify(appointmentServiceHelper).getConflictsForMultipleAppointments(appointments, appointmentConflictTypes);
+//        assertNotNull(appointmentsConflicts);
+//
+//    }
 
     private Appointment getAppointment(String uuid, Patient patient, AppointmentStatus appointmentStatus,
                                        AppointmentKind appointmentKind, Date start, Date end) {

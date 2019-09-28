@@ -267,18 +267,4 @@ public class AppointmentControllerTest {
         Mockito.verify(appointmentMapper, times(1)).fromRequest(appointmentRequest);
         Mockito.verify(appointmentsService, times(1)).validateAndSave(appointment);
     }
-
-    @Test
-    public void shouldReturnConflictResponseForAnAppointmentHavingNoConflicts() {
-        AppointmentRequest appointmentRequest = mock(AppointmentRequest.class);
-        Appointment appointment = mock(Appointment.class);
-
-        when(appointmentMapper.fromRequest(appointmentRequest)).thenReturn(appointment);
-        when(appointmentsService.getAppointmentConflicts(appointment)).thenReturn(mock(Map.class));
-
-        appointmentController.conflicts(appointmentRequest);
-
-        verify(appointmentMapper).fromRequest(appointmentRequest);
-        verify(appointmentsService).getAppointmentConflicts(appointment);
-    }
 }

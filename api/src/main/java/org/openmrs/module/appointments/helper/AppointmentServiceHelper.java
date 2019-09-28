@@ -4,11 +4,9 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.api.APIException;
-import org.openmrs.module.appointments.conflicts.AppointmentConflictType;
 import org.openmrs.module.appointments.model.Appointment;
 import org.openmrs.module.appointments.model.AppointmentAudit;
 import org.openmrs.module.appointments.model.AppointmentStatus;
-import org.openmrs.module.appointments.util.DateUtil;
 import org.openmrs.module.appointments.validator.AppointmentStatusChangeValidator;
 import org.openmrs.module.appointments.validator.AppointmentValidator;
 import org.springframework.stereotype.Component;
@@ -18,8 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Component
 public class AppointmentServiceHelper {
@@ -102,31 +98,4 @@ public class AppointmentServiceHelper {
         }
     }
 
-    public Map<String, List<Appointment>> getConflictsForMultipleAppointments(
-            List<Appointment> appointments, List<AppointmentConflictType> appointmentConflictTypes) {
-        Map<String, List<Appointment>> conflictsMap = new HashMap<>();
-        List<Appointment> filteredAppointments = getNonVoidedFutureAppointments(appointments);
-        for (AppointmentConflictType appointmentConflictType : appointmentConflictTypes) {
-            List<Appointment> conflicts = new ArrayList<>();
-            for (Appointment appointment : filteredAppointments) {
-                List<Appointment> conflictingAppointments = getConflictsForSingleAppointment(appointment, appointmentConflictType);
-                if (Objects.nonNull(conflictingAppointments) && CollectionUtils.isNotEmpty(conflictingAppointments))
-                    conflicts.addAll(conflictingAppointments);
-            }
-            if (CollectionUtils.isNotEmpty(conflicts))
-                conflictsMap.put(appointmentConflictType.getType(), conflicts);
-        }
-        return conflictsMap;
-    }
-
-    public List<Appointment> getConflictsForSingleAppointment(
-            Appointment appointment, AppointmentConflictType appointmentConflictType) {
-        return appointmentConflictType.getAppointmentConflicts(appointment);
-    }
-
-    private List<Appointment> getNonVoidedFutureAppointments(List<Appointment> appointments) {
-        return appointments.stream().filter(appointment -> { checkAndAssignAppointmentNumber(appointment);
-            return !(appointment.getVoided() || appointment.getStartDateTime().before(DateUtil.getStartOfDay()));
-        }).collect(Collectors.toList());
-    }
 }

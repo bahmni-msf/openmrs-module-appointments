@@ -22,7 +22,7 @@
   		    http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
   		    http://www.springframework.org/schema/util
   		    http://www.springframework.org/schema/util/spring-util-3.0.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
-    <context:component-scan base-package="org.openmrs.module.appointments"/>
+    <context:component-scan base-package="org.openmrs.module.appointmens"/>
     <bean id="administrationService" name="administrationService" class="org.openmrs.api.impl.AdministrationServiceImpl"/>
     <bean parent="serviceContext">
         <property name="moduleService">
@@ -56,6 +56,10 @@
         <property name="sessionFactory">
             <ref bean="sessionFactory"/>
         </property>
+    </bean>
+
+    <bean id="patientDoubleBookingConflict" class="org.openmrs.module.appointments.conflicts.impl.PatientDoubleBookingConflict">
+        <property name="appointmentsService" ref="appointmentsService"/>
     </bean>
 
     <bean id="appointmentsService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
@@ -138,12 +142,6 @@
                 <property name="appointmentDao">
                     <ref bean="appointmentDao"/>
                 </property>
-                <property name="appointmentConflictTypes">
-                    <list>
-                        <bean class="org.openmrs.module.appointments.conflicts.impl.AppointmentServiceUnavailabilityConflict"/>
-                        <!--<ref bean="patientDoubleBookingConflict"/>-->
-                    </list>
-                </property>
             </bean>
         </property>
         <property name="preInterceptors">
@@ -157,12 +155,6 @@
     <bean id="appointmentDao" class="org.openmrs.module.appointments.dao.impl.AppointmentDaoImpl">
         <property name="sessionFactory">
             <ref bean="sessionFactory"/>
-        </property>
-    </bean>
-
-    <bean id="patientDoubleBookingConflict" class="org.openmrs.module.appointments.conflicts.impl.PatientDoubleBookingConflict">
-        <property name="appointmentsService">
-            <ref bean="appointmentsService"/>
         </property>
     </bean>
 

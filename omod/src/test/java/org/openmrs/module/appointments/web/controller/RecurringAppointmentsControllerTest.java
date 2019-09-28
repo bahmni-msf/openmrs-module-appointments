@@ -306,7 +306,7 @@ public class RecurringAppointmentsControllerTest {
 
         ResponseEntity<Object> responseEntity = recurringAppointmentsController.conflicts(recurringAppointmentRequest);
         verify(appointmentMapper, never()).constructConflictResponse(Collections.emptyMap());
-        verify(appointmentRecurringPatternService, never()).getAllAppointmentsConflicts(any());
+        verify(appointmentsService, never()).getAppointmentsConflicts(any());
         verify(recurringAppointmentsService, never()).generateRecurringAppointments(any());
         assertEquals(responseEntity.getStatusCode(), HttpStatus.INTERNAL_SERVER_ERROR);
         assertEquals(((Map) ((Map) responseEntity.getBody()).get("error")).get("message"), "some error");
@@ -319,11 +319,11 @@ public class RecurringAppointmentsControllerTest {
         List<Appointment> appointments = mock(List.class);
         Map<String, List<Appointment>> conflicts = mock(Map.class);
         when(recurringAppointmentsService.generateRecurringAppointments(recurringAppointmentRequest)).thenReturn(appointments);
-        when(appointmentRecurringPatternService.getAllAppointmentsConflicts(appointments)).thenReturn(conflicts);
+        when(appointmentsService.getAppointmentsConflicts(appointments)).thenReturn(conflicts);
 
         ResponseEntity<Object> responseEntity = recurringAppointmentsController.conflicts(recurringAppointmentRequest);
         verify(recurringAppointmentsService).generateRecurringAppointments(recurringAppointmentRequest);
-        verify(appointmentRecurringPatternService).getAllAppointmentsConflicts(appointments);
+        verify(appointmentsService).getAppointmentsConflicts(appointments);
         verify(appointmentMapper).constructConflictResponse(conflicts);
         assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
         assertNotNull(responseEntity.getBody());

@@ -21,6 +21,4 @@ public interface AppointmentRecurringPatternService {
     @Transactional
     AppointmentRecurringPattern update(AppointmentRecurringPattern appointmentRecurringPattern, Appointment editedAppointment);
 
-    @Transactional
-    Map<String, List<Appointment>> getAllAppointmentsConflicts(List<Appointment> appointments);
 }

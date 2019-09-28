@@ -1,6 +1,5 @@
 package org.openmrs.module.appointments.service.impl;
 
-import org.openmrs.module.appointments.conflicts.AppointmentConflictType;
 import org.openmrs.module.appointments.dao.AppointmentDao;
 import org.openmrs.module.appointments.dao.AppointmentRecurringPatternDao;
 import org.openmrs.module.appointments.helper.AppointmentServiceHelper;
@@ -21,7 +20,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
@@ -42,8 +40,6 @@ public class AppointmentRecurringPatternServiceImpl implements AppointmentRecurr
     private List<AppointmentValidator> editAppointmentValidators;
 
     private AppointmentDao appointmentDao;
-
-    private List<AppointmentConflictType> appointmentConflictTypes;
 
     public void setAppointmentRecurringPatternDao(AppointmentRecurringPatternDao appointmentRecurringPatternDao) {
         this.appointmentRecurringPatternDao = appointmentRecurringPatternDao;
@@ -67,10 +63,6 @@ public class AppointmentRecurringPatternServiceImpl implements AppointmentRecurr
 
     public void setEditAppointmentValidators(List<AppointmentValidator> editAppointmentValidators) {
         this.editAppointmentValidators = editAppointmentValidators;
-    }
-
-    public void setAppointmentConflictTypes(List<AppointmentConflictType> appointmentConflictTypes) {
-        this.appointmentConflictTypes = appointmentConflictTypes;
     }
 
     @Override
@@ -122,11 +114,6 @@ public class AppointmentRecurringPatternServiceImpl implements AppointmentRecurr
                 })
                 .collect(Collectors.toList());
         return pendingAppointments;
-    }
-
-    @Override
-    public Map<String, List<Appointment>> getAllAppointmentsConflicts(List<Appointment> appointments) {
-        return appointmentServiceHelper.getConflictsForMultipleAppointments(appointments, appointmentConflictTypes);
     }
 
     private void updateAppointmentsDetails(AppointmentRecurringPattern appointmentRecurringPattern, List<Appointment> appointments) {

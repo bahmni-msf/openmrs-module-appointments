@@ -182,10 +182,10 @@ public class RecurringAppointmentsController {
                 throw new APIException(errors.getAllErrors().get(0).getCodes()[1]);
             }
             List<Appointment> appointments = getValidAppointments(recurringAppointmentRequest);
-            Map<String, List<Appointment>> appointmentConflicts = appointmentRecurringPatternService.getAllAppointmentsConflicts(appointments);
-            if (appointmentConflicts.isEmpty())
+            Map<String, List<Appointment>> appointmentsConflicts = appointmentsService.getAppointmentsConflicts(appointments);
+            if (appointmentsConflicts.isEmpty())
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            return new ResponseEntity<>(appointmentMapper.constructConflictResponse(appointmentConflicts),
+            return new ResponseEntity<>(appointmentMapper.constructConflictResponse(appointmentsConflicts),
                     HttpStatus.OK);
         } catch (RuntimeException e) {
             log.error("Runtime error while trying to get conflicts for recurring appointments", e);
