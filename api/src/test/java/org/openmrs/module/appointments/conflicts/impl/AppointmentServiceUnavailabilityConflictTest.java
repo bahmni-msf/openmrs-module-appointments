@@ -139,17 +139,87 @@ public class AppointmentServiceUnavailabilityConflictTest {
     @Test
     public void shouldReturnConflictWhenWeeklyAvailabilityIsNotAvailable() {
         AppointmentServiceDefinition appointmentServiceDefinition = new AppointmentServiceDefinition();
+        Appointment appointmentOne = new Appointment();
+        appointmentOne.setStartDateTime(getDate(2019, 8, 23, 11, 0, 0));
+        appointmentOne.setEndDateTime(getDate(2019, 8, 23, 11, 30, 0));
+        Appointment appointmentTwo = new Appointment();
+        appointmentTwo.setStartDateTime(getDate(2019, 8, 23, 18, 0, 0));
+        appointmentTwo.setEndDateTime(getDate(2019, 8, 23, 18, 30, 0));
+        appointmentOne.setService(appointmentServiceDefinition);
+        appointmentTwo.setService(appointmentServiceDefinition);
+        appointmentTwo.setAppointmentId(1);
+        appointmentServiceDefinition.setStartTime(new Time(11, 30, 0));
+        appointmentServiceDefinition.setEndTime(new Time(17, 0, 0));
+
+        List<Appointment> appointments = appointmentServiceUnavailabilityConflict.getConflicts(Arrays.asList(appointmentOne,appointmentTwo));
+
+        assertNotNull(appointments);
+        assertEquals(2,appointments.size());
+        assertEquals(appointmentOne, appointments.get(0));
+        assertEquals(appointmentTwo, appointments.get(1));
+    }
+
+    @Test
+    public void shouldNotReturnConflictWhenServiceDoesntHaveStartEndTime() {
+        AppointmentServiceDefinition appointmentServiceDefinition = new AppointmentServiceDefinition();
         Appointment appointment = new Appointment();
         appointment.setStartDateTime(getDate(2019, 8, 23, 11, 0, 0));
         appointment.setEndDateTime(getDate(2019, 8, 23, 11, 30, 0));
         appointment.setService(appointmentServiceDefinition);
         appointment.setAppointmentId(1);
-        appointmentServiceDefinition.setStartTime(new Time(11, 30, 0));
-        appointmentServiceDefinition.setEndTime(new Time(17, 0, 0));
 
         List<Appointment> appointments = appointmentServiceUnavailabilityConflict.getConflicts(Collections.singletonList(appointment));
 
         assertNotNull(appointments);
-        assertEquals(appointment, appointments.get(0));
+        assertEquals(0,appointments.size());
+    }
+
+    @Test
+    public void shouldNotReturnConflictWhenStartTimeGreaterThanEndTimeForService() {
+        AppointmentServiceDefinition appointmentServiceDefinition = new AppointmentServiceDefinition();
+        appointmentServiceDefinition.setStartTime(new Time(11, 30, 0));
+        appointmentServiceDefinition.setEndTime(new Time(11, 0, 0));
+        Appointment appointment = new Appointment();
+        appointment.setStartDateTime(getDate(2019, 8, 23, 11, 0, 0));
+        appointment.setEndDateTime(getDate(2019, 8, 23, 11, 30, 0));
+        appointment.setService(appointmentServiceDefinition);
+        appointment.setAppointmentId(1);
+
+        List<Appointment> appointments = appointmentServiceUnavailabilityConflict.getConflicts(Collections.singletonList(appointment));
+
+        assertNotNull(appointments);
+        assertEquals(0,appointments.size());
+    }
+
+    @Test
+    public void shouldNotReturnAppointmentWhenStartTimeDoesNotExist() {
+        AppointmentServiceDefinition appointmentServiceDefinition = new AppointmentServiceDefinition();
+        appointmentServiceDefinition.setStartTime(new Time(11, 30, 0));
+        appointmentServiceDefinition.setEndTime(new Time(11, 0, 0));
+        Appointment appointment = new Appointment();
+        appointment.setStartDateTime(getDate(2019, 8, 23, 11, 0, 0));
+        appointment.setService(appointmentServiceDefinition);
+        appointment.setAppointmentId(1);
+
+        List<Appointment> appointments = appointmentServiceUnavailabilityConflict.getConflicts(Collections.singletonList(appointment));
+
+        assertNotNull(appointments);
+        assertEquals(0,appointments.size());
+    }
+
+    @Test
+    public void shouldNotReturnAppointmentWhenEndTimeDoesNotExist() {
+        AppointmentServiceDefinition appointmentServiceDefinition = new AppointmentServiceDefinition();
+        appointmentServiceDefinition.setStartTime(new Time(11, 30, 0));
+        appointmentServiceDefinition.setEndTime(new Time(11, 0, 0));
+        Appointment appointment = new Appointment();
+        appointment.setEndDateTime(getDate(2019, 8, 23, 11, 0, 0));
+        appointment.setService(appointmentServiceDefinition);
+        appointment.setAppointmentId(1);
+
+        List<Appointment> appointments = appointmentServiceUnavailabilityConflict.getConflicts(Collections.singletonList(appointment));
+
+        assertNotNull(appointments);
+        assertEquals(0,appointments.size());
     }
 }

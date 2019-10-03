@@ -8,6 +8,7 @@ import java.sql.Time;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -163,5 +164,11 @@ public class AppointmentServiceDefinition extends BaseOpenmrsData implements Ser
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public boolean hasValidTimePeriod(){
+        Time startTime = this.getStartTime();
+        Time endTime = this.getEndTime();
+        return !Objects.isNull(startTime) && !Objects.isNull(endTime) && startTime.getTime() <= endTime.getTime();
     }
 }

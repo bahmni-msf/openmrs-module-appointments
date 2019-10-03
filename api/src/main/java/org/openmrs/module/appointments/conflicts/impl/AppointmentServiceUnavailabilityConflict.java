@@ -1,8 +1,8 @@
 package org.openmrs.module.appointments.conflicts.impl;
 
 import org.openmrs.module.appointments.conflicts.AppointmentConflict;
-import org.openmrs.module.appointments.model.AppointmentConflictType;
 import org.openmrs.module.appointments.model.Appointment;
+import org.openmrs.module.appointments.model.AppointmentConflictType;
 import org.openmrs.module.appointments.model.AppointmentServiceDefinition;
 import org.openmrs.module.appointments.model.ServiceWeeklyAvailability;
 
@@ -42,6 +42,7 @@ public class AppointmentServiceUnavailabilityConflict implements AppointmentConf
 
     private boolean checkConflicts(Appointment appointment, AppointmentServiceDefinition appointmentServiceDefinition) {
         Set<ServiceWeeklyAvailability> weeklyAvailableDays = appointmentServiceDefinition.getWeeklyAvailability();
+        boolean serviceHasTimePeriod = appointmentServiceDefinition.hasValidTimePeriod();
         if (isObjectPresent(weeklyAvailableDays)) {
             String appointmentDay = DayFormat.format(appointment.getStartDateTime());
             Optional<ServiceWeeklyAvailability> dayAvailability = weeklyAvailableDays.stream()
@@ -52,7 +53,7 @@ public class AppointmentServiceUnavailabilityConflict implements AppointmentConf
             }
             return true;
         }
-        return checkTimeAvailability(appointment,
+        return serviceHasTimePeriod && checkTimeAvailability(appointment,
                 appointmentServiceDefinition.getStartTime(), appointmentServiceDefinition.getEndTime());
 
     }
