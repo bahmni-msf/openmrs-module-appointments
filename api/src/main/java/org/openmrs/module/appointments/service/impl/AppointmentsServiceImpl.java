@@ -39,7 +39,6 @@ import static org.openmrs.module.appointments.constants.PrivilegeConstants.MANAG
 import static org.openmrs.module.appointments.constants.PrivilegeConstants.RESET_APPOINTMENT_STATUS;
 import static org.openmrs.module.appointments.util.DateUtil.getStartOfDay;
 
-@Transactional
 public class AppointmentsServiceImpl implements AppointmentsService {
 
     private Log log = LogFactory.getLog(this.getClass());
