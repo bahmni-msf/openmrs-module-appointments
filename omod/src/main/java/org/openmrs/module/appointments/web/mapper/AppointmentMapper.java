@@ -76,14 +76,6 @@ public class AppointmentMapper {
         return appointment;
     }
 
-    public Appointment fromRequestClonedAppointment(AppointmentRequest appointmentRequest) {
-        Appointment appointment = new Appointment();
-        appointment.setUuid(appointmentRequest.getUuid());
-        appointment.setPatient(patientService.getPatientByUuid(appointmentRequest.getPatientUuid()));
-        mapAppointmentRequestToAppointment(appointmentRequest, appointment);
-        return appointment;
-    }
-
     public void mapAppointmentRequestToAppointment(AppointmentRequest appointmentRequest, Appointment appointment) {
         AppointmentServiceDefinition appointmentServiceDefinition = appointmentServiceDefinitionService.getAppointmentServiceByUuid(appointmentRequest.getServiceUuid());
         AppointmentServiceType appointmentServiceType = null;

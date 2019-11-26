@@ -77,11 +77,9 @@ public interface AppointmentsService {
     @Authorized({VIEW_APPOINTMENTS})
     List<Appointment> search(AppointmentSearchRequest appointmentSearchRequest);
 
-    @Transactional
     @Authorized({VIEW_APPOINTMENTS})
     Map<Enum, List<Appointment>> getAppointmentConflicts(Appointment appointment);
 
-    @Transactional
     @Authorized({VIEW_APPOINTMENTS})
     Map<Enum, List<Appointment>> getAppointmentsConflicts(List<Appointment> appointments);
 }
