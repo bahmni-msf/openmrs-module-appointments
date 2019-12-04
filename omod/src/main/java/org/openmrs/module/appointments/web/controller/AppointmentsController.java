@@ -110,7 +110,7 @@ public class AppointmentsController {
     @ResponseBody
     public ResponseEntity<Object> getConflicts(@RequestBody AppointmentRequest appointmentRequest) {
         try {
-            Appointment appointment = appointmentMapper.fromRequest(appointmentRequest);
+            Appointment appointment = appointmentMapper.fromRequestClonedAppointment(appointmentRequest);
             Map<Enum, List<Appointment>> appointmentConflicts = appointmentsService.getAppointmentConflicts(appointment);
             if (appointmentConflicts.isEmpty())
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);

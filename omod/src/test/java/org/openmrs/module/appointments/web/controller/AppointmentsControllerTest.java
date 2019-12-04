@@ -219,12 +219,12 @@ public class AppointmentsControllerTest {
         AppointmentRequest appointmentRequest = mock(AppointmentRequest.class);
         Appointment appointment = mock(Appointment.class);
 
-        when(appointmentMapper.fromRequest(appointmentRequest)).thenReturn(appointment);
+        when(appointmentMapper.fromRequestClonedAppointment(appointmentRequest)).thenReturn(appointment);
         when(appointmentsService.getAppointmentConflicts(appointment)).thenReturn(mock(Map.class));
 
         appointmentsController.getConflicts(appointmentRequest);
 
-        verify(appointmentMapper).fromRequest(appointmentRequest);
+        verify(appointmentMapper).fromRequestClonedAppointment(appointmentRequest);
         verify(appointmentsService).getAppointmentConflicts(appointment);
     }
 }
