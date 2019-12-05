@@ -1,11 +1,13 @@
 package org.openmrs.module.appointments.web.service.impl;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.openmrs.annotation.Authorized;
 import org.openmrs.api.APIException;
 import org.openmrs.module.appointments.model.*;
 import org.openmrs.module.appointments.service.AppointmentsService;
 import org.openmrs.module.appointments.web.contract.RecurringAppointmentRequest;
 import org.openmrs.module.appointments.web.mapper.AppointmentMapper;
+import org.openmrs.module.appointments.web.mapper.RecurringPatternMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,15 +24,19 @@ public class AllAppointmentRecurringPatternUpdateService {
     private AppointmentMapper appointmentMapper;
 
     @Autowired
+    private RecurringPatternMapper recurringPatternMapper;
+
+    @Autowired
     RecurringAppointmentsService recurringAppointmentsService;
 
     public AppointmentRecurringPattern getUpdatedRecurringPattern(RecurringAppointmentRequest recurringAppointmentRequest) {
         String clientTimeZone = recurringAppointmentRequest.getTimeZone();
         String serverTimeZone = Calendar.getInstance().getTimeZone().getID();
         Appointment appointment = getAppointment(recurringAppointmentRequest);
+        AppointmentRecurringPattern recurringPattern = recurringPatternMapper.cloneAppointmentRecurringPattern(appointment.getAppointmentRecurringPattern());
         appointmentMapper.mapAppointmentRequestToAppointment(recurringAppointmentRequest.getAppointmentRequest(), appointment);
         List<Appointment> newSetOfAppointments = recurringAppointmentsService
-                .getUpdatedSetOfAppointments(appointment.getAppointmentRecurringPattern(), recurringAppointmentRequest);
+                .getUpdatedSetOfAppointments(recurringPattern, recurringAppointmentRequest);
         AppointmentRecurringPattern updatedAppointmentRecurringPattern = appointment.getAppointmentRecurringPattern();
         updatedAppointmentRecurringPattern.setEndDate(recurringAppointmentRequest.getRecurringPattern().getEndDate());
         updatedAppointmentRecurringPattern.setFrequency(recurringAppointmentRequest.getRecurringPattern().getFrequency());
@@ -43,6 +49,7 @@ public class AllAppointmentRecurringPatternUpdateService {
         TimeZone.setDefault(TimeZone.getTimeZone(serverTimeZone));
         return updatedAppointmentRecurringPattern;
     }
+
 
     private Appointment getAppointment(RecurringAppointmentRequest recurringAppointmentRequest) {
         Appointment appointment = appointmentsService

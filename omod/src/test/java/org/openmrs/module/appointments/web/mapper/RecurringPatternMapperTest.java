@@ -81,4 +81,21 @@ public class RecurringPatternMapperTest {
         assertEquals(endDate, recurringPattern.getEndDate());
         assertEquals(2, recurringPattern.getDaysOfWeek().size());
     }
+
+    @Test
+    public void shouldCloneAppointmentRecurringPatternObject() {
+        AppointmentRecurringPattern appointmentRecurringPattern = new AppointmentRecurringPattern();
+        Date endDate = new Date();
+        appointmentRecurringPattern.setEndDate(endDate);
+        appointmentRecurringPattern.setPeriod(1);
+        appointmentRecurringPattern.setType(RecurringAppointmentType.WEEK);
+        appointmentRecurringPattern.setDaysOfWeek("MON,TUE");
+
+        AppointmentRecurringPattern clone = recurringPatternMapper.cloneAppointmentRecurringPattern(appointmentRecurringPattern);
+
+        assertEquals(RecurringAppointmentType.WEEK, clone.getType());
+        assertEquals((Integer)1, clone.getPeriod());
+        assertEquals(endDate, clone.getEndDate());
+        assertEquals("MON,TUE", clone.getDaysOfWeek());
+    }
 }

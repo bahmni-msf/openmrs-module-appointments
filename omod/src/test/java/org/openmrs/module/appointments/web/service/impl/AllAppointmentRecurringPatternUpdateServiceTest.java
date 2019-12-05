@@ -27,6 +27,7 @@ import org.openmrs.module.appointments.web.contract.AppointmentRequest;
 import org.openmrs.module.appointments.web.contract.RecurringAppointmentRequest;
 import org.openmrs.module.appointments.web.contract.RecurringPattern;
 import org.openmrs.module.appointments.web.mapper.AppointmentMapper;
+import org.openmrs.module.appointments.web.mapper.RecurringPatternMapper;
 import org.openmrs.module.appointments.web.util.AppointmentBuilder;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -57,6 +58,9 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
 
     @Mock
     private AppointmentMapper appointmentMapper;
+
+    @Mock
+    private RecurringPatternMapper recurringPatternMapper;
 
     @Mock
     private Patient patient;
@@ -153,6 +157,8 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
         appointmentOne.setAppointmentRecurringPattern(appointmentRecurringPattern);
         appointmentThree.setAppointmentRecurringPattern(appointmentRecurringPattern);
         appointmentTwo.setAppointmentRecurringPattern(appointmentRecurringPattern);
+        AppointmentRecurringPattern cloneRecurringPattern = recurringPatternMapper.cloneAppointmentRecurringPattern(
+                appointmentOne.getAppointmentRecurringPattern());
 
 
         when(appointmentsService.getAppointmentByUuid(any())).thenReturn(appointmentTwo);
@@ -171,7 +177,7 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
                 assertEquals(101, providerId);
             }
         });
-        verify(recurringAppointmentsService).getUpdatedSetOfAppointments(appointmentRecurringPattern, recurringAppointmentRequest);
+        verify(recurringAppointmentsService).getUpdatedSetOfAppointments(cloneRecurringPattern, recurringAppointmentRequest);
         verify(appointmentMapper).mapAppointmentRequestToAppointment(recurringAppointmentRequest.getAppointmentRequest(), appointmentTwo);
     }
 
@@ -254,6 +260,9 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
         appointmentThree.setAppointmentRecurringPattern(appointmentRecurringPattern);
         appointmentFour.setAppointmentRecurringPattern(appointmentRecurringPattern);
         newAppointmentTwo.setAppointmentRecurringPattern(appointmentRecurringPattern);
+        AppointmentRecurringPattern cloneRecurringPattern = recurringPatternMapper.cloneAppointmentRecurringPattern(
+                appointmentOne.getAppointmentRecurringPattern());
+
 
         when(appointmentsService.getAppointmentByUuid(any())).thenReturn(newAppointmentTwo);
         when(recurringAppointmentsService.getUpdatedSetOfAppointments(appointmentRecurringPattern, recurringAppointmentRequest))
@@ -274,7 +283,7 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
                 .map(appointment -> appointment.getEndDateTime())
                 .filter(appointmentTime -> appointmentTime.after(endTimeCalendar.getTime())
                         || appointmentTime.equals(endTimeCalendar.getTime())).count());
-        verify(recurringAppointmentsService).getUpdatedSetOfAppointments(appointmentRecurringPattern, recurringAppointmentRequest);
+        verify(recurringAppointmentsService).getUpdatedSetOfAppointments(cloneRecurringPattern, recurringAppointmentRequest);
         verify(appointmentMapper).mapAppointmentRequestToAppointment(recurringAppointmentRequest.getAppointmentRequest(), newAppointmentTwo);
     }
 
@@ -328,6 +337,9 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
         appointmentOne.setAppointmentRecurringPattern(appointmentRecurringPattern);
         appointmentTwo.setAppointmentRecurringPattern(appointmentRecurringPattern);
         appointmentThree.setAppointmentRecurringPattern(appointmentRecurringPattern);
+        AppointmentRecurringPattern cloneRecurringPattern = recurringPatternMapper.cloneAppointmentRecurringPattern(
+                appointmentOne.getAppointmentRecurringPattern());
+
 
 
         when(appointmentsService.getAppointmentByUuid(any())).thenReturn(appointmentTwo);
@@ -342,7 +354,7 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
             assertEquals(2, a.getProviders().size());
         });
         verify(appointmentsService, times(1)).getAppointmentByUuid(anyString());
-        verify(recurringAppointmentsService).getUpdatedSetOfAppointments(appointmentRecurringPattern, recurringAppointmentRequest);
+        verify(recurringAppointmentsService).getUpdatedSetOfAppointments(cloneRecurringPattern, recurringAppointmentRequest);
         verify(appointmentMapper).mapAppointmentRequestToAppointment(recurringAppointmentRequest.getAppointmentRequest(), appointmentTwo);
     }
 
@@ -421,6 +433,9 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
         appointmentOne.setAppointmentRecurringPattern(appointmentRecurringPattern);
         appointmentThree.setAppointmentRecurringPattern(appointmentRecurringPattern);
         appointmentTwo.setAppointmentRecurringPattern(appointmentRecurringPattern);
+        AppointmentRecurringPattern cloneRecurringPattern = recurringPatternMapper.cloneAppointmentRecurringPattern(
+                appointmentOne.getAppointmentRecurringPattern());
+
 
 
         when(appointmentsService.getAppointmentByUuid(any())).thenReturn(appointmentTwo);
@@ -444,7 +459,7 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
             }
         });
         verify(appointmentsService, times(1)).getAppointmentByUuid(anyString());
-        verify(recurringAppointmentsService).getUpdatedSetOfAppointments(appointmentRecurringPattern, recurringAppointmentRequest);
+        verify(recurringAppointmentsService).getUpdatedSetOfAppointments(cloneRecurringPattern, recurringAppointmentRequest);
         verify(appointmentMapper).mapAppointmentRequestToAppointment(recurringAppointmentRequest.getAppointmentRequest(), appointmentTwo);
     }
 
@@ -503,6 +518,9 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
         appointmentThree.setAppointmentRecurringPattern(appointmentRecurringPattern);
 
         appointmentTwo.setProviders(appointmentProviders);
+        AppointmentRecurringPattern cloneRecurringPattern = recurringPatternMapper.cloneAppointmentRecurringPattern(
+                appointmentOne.getAppointmentRecurringPattern());
+
 
         when(appointmentsService.getAppointmentByUuid(any())).thenReturn(appointmentTwo);
         when(recurringAppointmentsService.getUpdatedSetOfAppointments(appointmentRecurringPattern, recurringAppointmentRequest))
@@ -519,7 +537,7 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
             }
         });
         verify(appointmentsService, times(1)).getAppointmentByUuid(anyString());
-        verify(recurringAppointmentsService).getUpdatedSetOfAppointments(appointmentRecurringPattern, recurringAppointmentRequest);
+        verify(recurringAppointmentsService).getUpdatedSetOfAppointments(cloneRecurringPattern, recurringAppointmentRequest);
         verify(appointmentMapper).mapAppointmentRequestToAppointment(recurringAppointmentRequest.getAppointmentRequest(), appointmentTwo);
     }
 
@@ -600,6 +618,9 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
                 new Location(), new HashSet<>(), "appThree",
                 DateUtils.addDays(startTimeCalendar.getTime(), 2),
                 DateUtils.addDays(endTimeCalendar.getTime(), 2));
+        AppointmentRecurringPattern cloneRecurringPattern = recurringPatternMapper.cloneAppointmentRecurringPattern(
+                appointmentOne.getAppointmentRecurringPattern());
+
 
         when(appointmentsService.getAppointmentByUuid(anyString())).thenReturn(appointmentTwo);
         when(recurringAppointmentsService.getUpdatedSetOfAppointments(any(), any())).thenReturn(Arrays.asList(appointmentOne, appointmentTwo, addedAppointmentThree));
@@ -608,6 +629,6 @@ public class AllAppointmentRecurringPatternUpdateServiceTest {
 
         assertEquals("comment", addedAppointmentThree.getComments());
         verify(appointmentsService).getAppointmentByUuid(anyString());
-        verify(recurringAppointmentsService).getUpdatedSetOfAppointments(appointmentRecurringPattern, recurringAppointmentRequest);
+        verify(recurringAppointmentsService).getUpdatedSetOfAppointments(cloneRecurringPattern, recurringAppointmentRequest);
     }
 }

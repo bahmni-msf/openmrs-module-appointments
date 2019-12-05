@@ -39,7 +39,6 @@ import static org.openmrs.module.appointments.constants.PrivilegeConstants.MANAG
 import static org.openmrs.module.appointments.constants.PrivilegeConstants.RESET_APPOINTMENT_STATUS;
 import static org.openmrs.module.appointments.util.DateUtil.getStartOfDay;
 
-@Transactional
 public class AppointmentsServiceImpl implements AppointmentsService {
 
     private Log log = LogFactory.getLog(this.getClass());
@@ -75,9 +74,9 @@ public class AppointmentsServiceImpl implements AppointmentsService {
         this.appointmentAuditDao = appointmentAuditDao;
     }
 
-	public void setAppointmentServiceHelper(AppointmentServiceHelper appointmentServiceHelper) {
-		this.appointmentServiceHelper = appointmentServiceHelper;
-	}
+    public void setAppointmentServiceHelper(AppointmentServiceHelper appointmentServiceHelper) {
+        this.appointmentServiceHelper = appointmentServiceHelper;
+    }
 
     public void setEditAppointmentValidators(List<AppointmentValidator> editAppointmentValidators) {
         this.editAppointmentValidators = editAppointmentValidators;
@@ -100,12 +99,13 @@ public class AppointmentsServiceImpl implements AppointmentsService {
     private boolean isCurrentUserSamePersonAsOneOfTheAppointmentProviders(Set<AppointmentProvider> providers) {
         return providers.stream()
                 .anyMatch(provider -> provider.getProvider().getPerson().
-                equals(Context.getAuthenticatedUser().getPerson()));
+                        equals(Context.getAuthenticatedUser().getPerson()));
     }
 
+    @Transactional
     @Override
     public Appointment validateAndSave(Appointment appointment) throws APIException {
-        validate(appointment, appointmentValidators );
+        validate(appointment, appointmentValidators);
         appointmentServiceHelper.checkAndAssignAppointmentNumber(appointment);
         save(appointment);
         return appointment;
@@ -116,60 +116,68 @@ public class AppointmentsServiceImpl implements AppointmentsService {
         appointmentDao.save(appointment);
     }
 
+    @Transactional
     @Override
     public void validate(Appointment appointment, List<AppointmentValidator> appointmentValidators) {
         if (!validateIfUserHasSelfOrAllAppointmentsAccess(appointment)) {
             throw new APIAuthenticationException(Context.getMessageSourceService().getMessage(PRIVILEGES_EXCEPTION_CODE,
-                    new Object[] { MANAGE_APPOINTMENTS }, null));
+                    new Object[]{MANAGE_APPOINTMENTS}, null));
         }
         appointmentServiceHelper.validate(appointment, appointmentValidators);
     }
 
+    @Transactional
     @Override
     public List<Appointment> getAllAppointments(Date forDate) {
         List<Appointment> appointments = appointmentDao.getAllAppointments(forDate);
         return appointments.stream().filter(appointment -> !isServiceOrServiceTypeVoided(appointment)).collect(Collectors.toList());
     }
 
-    private boolean isServiceOrServiceTypeVoided(Appointment appointment){
+    private boolean isServiceOrServiceTypeVoided(Appointment appointment) {
         return (appointment.getService() != null && appointment.getService().getVoided()) ||
-               (appointment.getServiceType() != null && appointment.getServiceType().getVoided());
+                (appointment.getServiceType() != null && appointment.getServiceType().getVoided());
     }
 
     /**
      * TODO: refactor. How can a search by an appointment return a list of appointments?
+     *
      * @param appointment
      * @return
      */
+    @Transactional
     @Override
     public List<Appointment> search(Appointment appointment) {
         List<Appointment> appointments = appointmentDao.search(appointment);
         return appointments.stream().filter(searchedAppointment -> !isServiceOrServiceTypeVoided(searchedAppointment)).collect(Collectors.toList());
     }
 
+    @Transactional
     @Override
     public List<Appointment> getAllFutureAppointmentsForService(AppointmentServiceDefinition appointmentServiceDefinition) {
         return appointmentDao.getAllFutureAppointmentsForService(appointmentServiceDefinition);
     }
 
+    @Transactional
     @Override
     public List<Appointment> getAllFutureAppointmentsForServiceType(AppointmentServiceType appointmentServiceType) {
         return appointmentDao.getAllFutureAppointmentsForServiceType(appointmentServiceType);
     }
 
+    @Transactional
     @Override
     public List<Appointment> getAppointmentsForService(AppointmentServiceDefinition appointmentServiceDefinition, Date startDate, Date endDate, List<AppointmentStatus> appointmentStatusList) {
         return appointmentDao.getAppointmentsForService(appointmentServiceDefinition, startDate, endDate, appointmentStatusList);
     }
 
+    @Transactional
     @Override
     public Appointment getAppointmentByUuid(String uuid) {
-        Appointment appointment = appointmentDao.getAppointmentByUuid(uuid);
-        return appointment;
+        return appointmentDao.getAppointmentByUuid(uuid);
     }
 
+    @Transactional
     @Override
-    public void changeStatus(Appointment appointment, String status, Date onDate) throws APIException{
+    public void changeStatus(Appointment appointment, String status, Date onDate) throws APIException {
         AppointmentStatus appointmentStatus = AppointmentStatus.valueOf(status);
         validateUserPrivilege(appointment, appointmentStatus);
         appointmentServiceHelper.validateStatusChangeAndGetErrors(appointment, appointmentStatus, statusChangeValidators);
@@ -194,17 +202,19 @@ public class AppointmentsServiceImpl implements AppointmentsService {
         return appointmentStatus != AppointmentStatus.Scheduled || Context.hasPrivilege(RESET_APPOINTMENT_STATUS);
     }
 
+    @Transactional
     @Override
     public List<Appointment> getAllAppointmentsInDateRange(Date startDate, Date endDate) {
         List<Appointment> appointments = appointmentDao.getAllAppointmentsInDateRange(startDate, endDate);
         return appointments.stream().filter(appointment -> !isServiceOrServiceTypeVoided(appointment)).collect(Collectors.toList());
     }
 
+    @Transactional
     @Override
-    public void undoStatusChange(Appointment appointment) throws APIException{
+    public void undoStatusChange(Appointment appointment) throws APIException {
         if (!validateIfUserHasSelfOrAllAppointmentsAccess(appointment)) {
             throw new APIAuthenticationException(Context.getMessageSourceService().getMessage(PRIVILEGES_EXCEPTION_CODE,
-                    new Object[] { MANAGE_APPOINTMENTS }, null));
+                    new Object[]{MANAGE_APPOINTMENTS}, null));
         }
         AppointmentAudit statusChangeEvent = appointmentAuditDao.getPriorStatusChangeEvent(appointment);
         if (statusChangeEvent != null) {
@@ -215,6 +225,7 @@ public class AppointmentsServiceImpl implements AppointmentsService {
             throw new APIException("No status change actions to undo");
     }
 
+    @Transactional
     @Override
     public List<Appointment> search(AppointmentSearchRequest appointmentSearchRequest) {
         if (isNull(appointmentSearchRequest.getStartDate()) || isNull(appointmentSearchRequest.getEndDate())) {
@@ -251,12 +262,14 @@ public class AppointmentsServiceImpl implements AppointmentsService {
         }).collect(Collectors.toList());
     }
 
+    @Transactional
     @Override
     public void updateAppointmentProviderResponse(AppointmentProvider appointmentProviderProvider) {
         //TODO
         throw new NotYetImplementedException("This feature is not yet implemented");
     }
 
+    @Transactional
     @Override
     public Appointment reschedule(String originalAppointmentUuid, Appointment newAppointment, boolean retainAppointmentNumber) {
         Appointment prevAppointment = getAppointmentByUuid(originalAppointmentUuid);
