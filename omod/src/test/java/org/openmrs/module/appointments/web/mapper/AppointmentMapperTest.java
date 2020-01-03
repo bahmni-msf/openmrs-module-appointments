@@ -281,6 +281,7 @@ public class AppointmentMapperTest {
         assertEquals(appointment.getAppointmentKind(), AppointmentKind.valueOf(response.getAppointmentKind()));
         assertEquals(appointment.getStatus(), AppointmentStatus.valueOf(response.getStatus()));
         assertEquals(appointment.getComments(), response.getComments());
+        assertEquals(appointment.getVoided(), response.getVoided());
         verify(extension, times(1)).run(appointment);
         assertEquals(2, response.getAdditionalInfo().keySet().size());
     }
@@ -309,6 +310,7 @@ public class AppointmentMapperTest {
         assertEquals(appointment.getAppointmentKind(), AppointmentKind.valueOf(response.getAppointmentKind()));
         assertEquals(appointment.getStatus(), AppointmentStatus.valueOf(response.getStatus()));
         assertEquals(appointment.getComments(), response.getComments());
+        assertEquals(appointment.getVoided(), response.getVoided());
     }
 
     @Test
@@ -352,6 +354,7 @@ public class AppointmentMapperTest {
         assertEquals(appointment.getAppointmentKind(), AppointmentKind.valueOf(response.getAppointmentKind()));
         assertEquals(appointment.getStatus(), AppointmentStatus.valueOf(response.getStatus()));
         assertEquals(appointment.getComments(), response.getComments());
+        assertEquals(appointment.getVoided(), response.getVoided());
     }
 
     private AppointmentRequest createAppointmentRequest() throws ParseException {
