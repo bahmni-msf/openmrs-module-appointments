@@ -72,8 +72,13 @@ public class AppointmentDaoImpl implements AppointmentDao {
         Criteria criteria = sessionFactory.getCurrentSession().createCriteria(Appointment.class).add(
                 Example.create(appointment).excludeProperty("uuid"));
 
-        if (appointment.getPatient() != null) criteria.createCriteria("patient").add(
-                Example.create(appointment.getPatient()));
+        if(appointment.getPatient()!=null) criteria.createCriteria("patient").add(
+                Example.create(appointment.getPatient())
+                        .excludeProperty("gender")
+                        .excludeProperty("birthdate")
+                        .excludeProperty("birthdateEstimated")
+                        .excludeProperty("dead")
+                        .excludeProperty("deathdateEstimated"));
 
         if (appointment.getLocation() != null) criteria.createCriteria("location").add(
                 Example.create(appointment.getLocation()));
