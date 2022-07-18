@@ -54,7 +54,12 @@ public class AppointmentDaoImpl implements AppointmentDao {
                 Example.create(appointment).excludeProperty("uuid"));
 
         if(appointment.getPatient()!=null) criteria.createCriteria("patient").add(
-                Example.create(appointment.getPatient()));
+                Example.create(appointment.getPatient())
+                        .excludeProperty("gender")
+                        .excludeProperty("birthdate")
+                        .excludeProperty("birthdateEstimated")
+                        .excludeProperty("dead")
+                        .excludeProperty("deathdateEstimated"));
 
         if(appointment.getLocation()!=null) criteria.createCriteria("location").add(
                 Example.create(appointment.getLocation()));
