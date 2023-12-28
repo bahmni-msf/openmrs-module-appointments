@@ -14,10 +14,18 @@ jobs:
         with:
           java-version: 1.8
           server-id: nexus-sonatype
-          server-username: NEXUS_USERNAME
-          server-password: NEXUS_PASSWORD
-      - name: Build and deploy with Maven
-        run: ./mvnw --no-transfer-progress clean -U deploy
-        env:
-          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      - name: Build with Maven
+        run: ./mvnw --no-transfer-progress clean install
+      - name: set Omod name
+        run: echo "OMOD_NAME=$(basename "$(ls -1 omod/target/*.omod)" .omod)" >> $GITHUB_ENV
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.BAHMNI_LITE_AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.BAHMNI_LITE_AWS_SECRET_KEY }}
+          aws-region: ${{ secrets.BAHMNI_LITE_AWS_REGION }}
+      - name: upload omod
+        run: |
+          aws s3 cp omod/target/${{env.OMOD_NAME}}.omod s3://v2-artefacts/${{github.event.repository.name}}/build/${{env.OMOD_NAME}}-$GITHUB_RUN_NUMBER.omod --region ${{ secrets.BAHMNI_LITE_AWS_REGION }} --acl public-read
+          aws s3 rm s3://v2-artefacts/${{github.event.repository.name}}/latest/ --region ap-south-1 --recursive
+          aws s3 cp omod/target/${{env.OMOD_NAME}}.omod s3://v2-artefacts/${{github.event.repository.name}}/latest/${{env.OMOD_NAME}}-$GITHUB_RUN_NUMBER.omod --region ${{ secrets.BAHMNI_LITE_AWS_REGION }} --acl public-read
